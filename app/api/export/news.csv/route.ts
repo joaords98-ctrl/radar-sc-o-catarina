@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { getRecentCutoffIso } from '@/lib/recent';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -38,9 +39,14 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin();
+  const daysParam = Number(req.nextUrl.searchParams.get('days') ?? '1');
+  const hours = Number.isFinite(daysParam) && daysParam > 1 ? Math.min(daysParam, 30) * 24 : undefined;
+  const cutoffIso = getRecentCutoffIso(hours);
+
   const { data, error } = await supabase
     .from('news_items')
     .select('title,link,source_name,source_domain,published_at,query_label,topic,city,region,opportunity_score,media_repercussion_score,media_mentions_count,top_media_sources,competitor_hits_count,competitor_names,status,angle,summary')
+    .gte('published_at', cutoffIso)
     .neq('status', 'descartado')
     .order('opportunity_score', { ascending: false })
     .order('published_at', { ascending: false })

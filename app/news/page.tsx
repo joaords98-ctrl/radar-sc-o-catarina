@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { NewsCard } from '@/components/NewsCard';
 import type { NewsItem } from '@/lib/types';
+import { formatRecentWindowLabel, getRecentCutoffIso } from '@/lib/recent';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,8 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   const city = typeof params.city === 'string' ? params.city : undefined;
 
   const supabase = getSupabaseAdmin();
-  let query = supabase.from('news_items').select('*').order('opportunity_score', { ascending: false }).order('published_at', { ascending: false }).limit(80);
+  const cutoffIso = getRecentCutoffIso();
+  let query = supabase.from('news_items').select('*').gte('published_at', cutoffIso).order('opportunity_score', { ascending: false }).order('published_at', { ascending: false }).limit(80);
 
   if (status) query = query.eq('status', status);
   if (topic) query = query.eq('topic', topic);
@@ -25,11 +27,11 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     <main className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black">Central de notícias</h2>
-          <p className="mt-2 text-sm text-zinc-600">Use como fila editorial. A regra é simples: fonte, checagem, ângulo próprio e publicação.</p>
+          <h2 className="text-3xl font-black">Central de notícias do dia</h2>
+          <p className="mt-2 text-sm text-zinc-600">Filtro padrão: {formatRecentWindowLabel()}. Use como fila editorial: fonte, checagem, ângulo próprio e publicação.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-sm font-bold">
-          <a className="rounded-xl bg-zinc-200 px-4 py-2" href="/news">Todas</a>
+          <a className="rounded-xl bg-zinc-200 px-4 py-2" href="/news">Hoje</a>
           <a className="rounded-xl bg-zinc-200 px-4 py-2" href="/news?status=novo">Novas</a>
           <a className="rounded-xl bg-zinc-200 px-4 py-2" href="/news?status=reapurar">Reapurar</a>
           <a className="rounded-xl bg-zinc-200 px-4 py-2" href="/news?status=publicado">Publicadas</a>

@@ -96,13 +96,15 @@ function scoreGroup(rows: NewsRow[], profiles: SourceProfile[]) {
   };
 }
 
-export async function refreshRepercussionMetrics(supabase: SupabaseClient) {
+export async function refreshRepercussionMetrics(supabase: SupabaseClient, options?: { sinceIso?: string }) {
+  const sinceIso = options?.sinceIso ?? new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString();
+
   const [{ data: rows, error: rowsError }, { data: profiles, error: profilesError }] = await Promise.all([
     supabase
       .from('news_items')
       .select('id,title,link,source_name,source_domain,published_at,opportunity_score,story_key')
       .not('story_key', 'is', null)
-      .gte('created_at', new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString())
+      .gte('published_at', sinceIso)
       .limit(2500),
     supabase.from('source_profiles').select('name,domain,priority_weight,is_competitor'),
   ]);

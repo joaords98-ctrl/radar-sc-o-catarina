@@ -267,3 +267,36 @@ O campo de “repercussão” é uma **métrica proxy editorial**, calculada por
 - força da pauta no score geral.
 
 Ela **não representa likes, comentários, salvamentos ou alcance real do Instagram**, porque esses dados dependem de API oficial/relatórios próprios. Para redes sociais, o caminho correto é importar manualmente os dados do Meta Business Suite ou conectar uma API autorizada.
+
+
+## v6 — Notícias do dia
+
+Esta versão evita notícia antiga de três formas:
+
+1. adiciona automaticamente `when:1d` nas buscas do Google News;
+2. ordena o RSS por data com `scoring=n`;
+3. ignora qualquer item fora da janela configurada em `RADAR_RECENT_HOURS` (padrão: 24h).
+
+Configure na Vercel, se quiser mudar a janela:
+
+```bash
+RADAR_RECENT_HOURS=24
+```
+
+Para ampliar um pouco e evitar perder notícia da madrugada, use:
+
+```bash
+RADAR_RECENT_HOURS=36
+```
+
+Rode também no Supabase:
+
+```txt
+supabase/v6_recent_only.sql
+```
+
+O painel, a aba Notícias, a análise de Concorrência e o CSV agora filtram por notícias recentes. Para exportar uma janela maior no CSV:
+
+```txt
+/api/export/news.csv?secret=SEU_CRON_SECRET&days=7
+```

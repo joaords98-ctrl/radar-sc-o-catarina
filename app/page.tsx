@@ -3,11 +3,13 @@ import { StatCard } from '@/components/StatCard';
 import { NewsCard } from '@/components/NewsCard';
 import type { NewsItem } from '@/lib/types';
 import { ManualCollectButton } from '@/components/ManualCollectButton';
+import { formatRecentWindowLabel, getRecentCutoffIso } from '@/lib/recent';
 
 export const dynamic = 'force-dynamic';
 
 async function getDashboardData() {
   const supabase = getSupabaseAdmin();
+  const cutoffIso = getRecentCutoffIso();
 
   const [
     { count: newsCount },
@@ -19,13 +21,13 @@ async function getDashboardData() {
     { data: competitorLatest },
     { data: runs },
   ] = await Promise.all([
-    supabase.from('news_items').select('*', { count: 'exact', head: true }),
-    supabase.from('news_items').select('*', { count: 'exact', head: true }).gte('opportunity_score', 70).neq('status', 'descartado'),
+    supabase.from('news_items').select('*', { count: 'exact', head: true }).gte('published_at', cutoffIso),
+    supabase.from('news_items').select('*', { count: 'exact', head: true }).gte('published_at', cutoffIso).gte('opportunity_score', 70).neq('status', 'descartado'),
     supabase.from('rss_queries').select('*', { count: 'exact', head: true }).eq('enabled', true),
-    supabase.from('news_items').select('*', { count: 'exact', head: true }).gte('media_repercussion_score', 60),
+    supabase.from('news_items').select('*', { count: 'exact', head: true }).gte('published_at', cutoffIso).gte('media_repercussion_score', 60),
     supabase.from('source_profiles').select('*', { count: 'exact', head: true }).eq('is_competitor', true),
-    supabase.from('news_items').select('*').neq('status', 'descartado').order('opportunity_score', { ascending: false }).order('published_at', { ascending: false }).limit(6),
-    supabase.from('news_items').select('*').neq('status', 'descartado').order('media_repercussion_score', { ascending: false }).order('media_mentions_count', { ascending: false }).limit(4),
+    supabase.from('news_items').select('*').gte('published_at', cutoffIso).neq('status', 'descartado').order('opportunity_score', { ascending: false }).order('published_at', { ascending: false }).limit(6),
+    supabase.from('news_items').select('*').gte('published_at', cutoffIso).neq('status', 'descartado').order('media_repercussion_score', { ascending: false }).order('media_mentions_count', { ascending: false }).limit(4),
     supabase.from('cron_runs').select('*').order('created_at', { ascending: false }).limit(1),
   ]);
 
@@ -38,6 +40,7 @@ async function getDashboardData() {
     latest: (latest ?? []) as NewsItem[],
     competitorLatest: (competitorLatest ?? []) as NewsItem[],
     lastRun: runs?.[0] ?? null,
+    windowLabel: formatRecentWindowLabel(),
   };
 }
 
@@ -55,18 +58,18 @@ export default async function Home() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-6">
-        <StatCard label="Notícias capturadas" value={data.newsCount} hint="Total no banco" />
-        <StatCard label="Pautas quentes" value={data.hotCount} hint="Score acima de 70" />
+        <StatCard label="Notícias do dia" value={data.newsCount} hint={data.windowLabel} />
+        <StatCard label="Pautas quentes hoje" value={data.hotCount} hint="Score acima de 70" />
         <StatCard label="Buscas ativas" value={data.queryCount} hint="Cidades, temas e regiões" />
         <StatCard label="Concorrentes" value={data.competitorCount} hint="Fontes mapeadas" />
-        <StatCard label="Com repercussão" value={data.repercussionCount} hint="Score mídia acima de 60" />
+        <StatCard label="Repercutindo hoje" value={data.repercussionCount} hint="Score mídia acima de 60" />
         <StatCard label="Última coleta" value={data.lastRun ? 'Rodou' : 'Sem coleta'} hint={data.lastRun?.created_at ? new Date(data.lastRun.created_at).toLocaleString('pt-BR') : 'Rode a coleta manual'} />
       </section>
 
       <section className="mt-8 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black">Oportunidades do dia</h2>
-          <p className="text-sm text-zinc-600">Priorize as notícias com maior score e sempre cheque fonte oficial antes de publicar.</p>
+          <p className="text-sm text-zinc-600">Mostrando apenas notícias recentes ({data.windowLabel}). Priorize maior score e cheque fonte oficial antes de publicar.</p>
         </div>
         <ManualCollectButton />
       </section>
@@ -79,7 +82,7 @@ export default async function Home() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black">Radar de concorrência</h2>
-            <p className="text-sm text-zinc-600">Pautas que aparecem em vários meios ou em concorrentes mapeados.</p>
+            <p className="text-sm text-zinc-600">Pautas recentes que aparecem em vários meios ou em concorrentes mapeados.</p>
           </div>
           <a className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-bold text-white" href="/competitors">Ver análise completa</a>
         </div>

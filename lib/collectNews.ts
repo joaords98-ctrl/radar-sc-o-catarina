@@ -3,12 +3,15 @@ import { getSupabaseAdmin } from './supabaseAdmin';
 import { buildGoogleNewsRssUrl, normalizeExternalId, splitGoogleNewsTitle } from './googleNews';
 import { inferAngle, scoreNews } from './scoring';
 import { buildStoryKey, refreshRepercussionMetrics, sourceDomainFromUrl } from './repercussion';
+import { getRecentCutoffIso, getRecentHours, isRecentPublishedAt } from './recent';
 import type { RssQuery } from './types';
 
 const parser = new Parser();
 
 export async function collectNews() {
   const supabase = getSupabaseAdmin();
+  const recentHours = getRecentHours();
+  const cutoffIso = getRecentCutoffIso(recentHours);
 
   const { data: queries, error } = await supabase
     .from('rss_queries')
@@ -20,13 +23,16 @@ export async function collectNews() {
   if (error) throw error;
 
   let inserted = 0;
+  let updated = 0;
   let skipped = 0;
+  let skippedOld = 0;
+  let skippedWithoutDate = 0;
   const errors: string[] = [];
 
   for (const query of (queries ?? []) as RssQuery[]) {
     try {
       const feed = await parser.parseURL(buildGoogleNewsRssUrl(query.query));
-      const items = feed.items.slice(0, 15);
+      const items = feed.items.slice(0, 25);
 
       for (const item of items) {
         if (!item.link || !item.title) {
@@ -34,8 +40,20 @@ export async function collectNews() {
           continue;
         }
 
-        const externalId = normalizeExternalId(item.link);
         const publishedAt = item.isoDate ?? item.pubDate ?? null;
+        if (!publishedAt) {
+          skippedWithoutDate += 1;
+          skipped += 1;
+          continue;
+        }
+
+        if (!isRecentPublishedAt(publishedAt, recentHours)) {
+          skippedOld += 1;
+          skipped += 1;
+          continue;
+        }
+
+        const externalId = normalizeExternalId(item.link);
         const { cleanTitle, sourceName } = splitGoogleNewsTitle(item.title);
         const storyKey = buildStoryKey(cleanTitle);
         const sourceDomain = sourceDomainFromUrl(item.link);
@@ -46,6 +64,12 @@ export async function collectNews() {
           publishedAt,
         });
 
+        const { data: existing } = await supabase
+          .from('news_items')
+          .select('id')
+          .eq('external_id', externalId)
+          .maybeSingle();
+
         const { error: insertError } = await supabase.from('news_items').upsert(
           {
             external_id: externalId,
@@ -55,7 +79,7 @@ export async function collectNews() {
             source_url: feed.link ?? null,
             source_domain: sourceDomain,
             story_key: storyKey,
-            published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
+            published_at: new Date(publishedAt).toISOString(),
             summary: item.contentSnippet ?? item.content ?? null,
             query_label: query.label,
             topic: query.topic,
@@ -70,6 +94,8 @@ export async function collectNews() {
 
         if (insertError) {
           errors.push(`${query.label}: ${insertError.message}`);
+        } else if (existing?.id) {
+          updated += 1;
         } else {
           inserted += 1;
         }
@@ -80,7 +106,8 @@ export async function collectNews() {
     }
   }
 
-  const repercussion = await refreshRepercussionMetrics(supabase);
+  // Métrica de repercussão apenas para pautas recentes. Mantém histórico no banco, mas o painel prioriza o dia.
+  const repercussion = await refreshRepercussionMetrics(supabase, { sinceIso: cutoffIso });
 
   await supabase.from('cron_runs').insert({
     job_name: 'collect-news',
@@ -90,5 +117,15 @@ export async function collectNews() {
     errors,
   });
 
-  return { inserted, skipped, errors, ...repercussion };
+  return {
+    inserted,
+    updated,
+    skipped,
+    skippedOld,
+    skippedWithoutDate,
+    recentHours,
+    cutoffIso,
+    errors,
+    ...repercussion,
+  };
 }

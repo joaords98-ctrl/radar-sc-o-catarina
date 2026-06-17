@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import type { NewsItem } from '@/lib/types';
+import { formatRecentWindowLabel, getRecentCutoffIso } from '@/lib/recent';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +17,13 @@ type CompetitorSource = {
 
 async function getData() {
   const supabase = getSupabaseAdmin();
+  const cutoffIso = getRecentCutoffIso();
 
   const [{ data: stories, error: storiesError }, { data: sources, error: sourcesError }] = await Promise.all([
     supabase
       .from('news_items')
       .select('*')
+      .gte('published_at', cutoffIso)
       .neq('status', 'descartado')
       .order('media_repercussion_score', { ascending: false })
       .order('media_mentions_count', { ascending: false })
@@ -58,7 +61,7 @@ export default async function CompetitorsPage() {
         <p className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-400">Análise da concorrência</p>
         <h2 className="mt-3 max-w-4xl text-4xl font-black leading-tight">Veja onde a pauta já apareceu e qual notícia está ganhando tração.</h2>
         <p className="mt-4 max-w-4xl text-zinc-300">
-          O painel calcula uma repercussão editorial por número de veiculações, diversidade de fontes e presença em veículos concorrentes mapeados. Não é métrica oficial de likes/comentários do Instagram.
+          O painel mostra apenas pautas recentes ({formatRecentWindowLabel()}) e calcula uma repercussão editorial por número de veiculações, diversidade de fontes e presença em veículos concorrentes mapeados. Não é métrica oficial de likes/comentários do Instagram.
         </p>
       </section>
 
@@ -81,7 +84,7 @@ export default async function CompetitorsPage() {
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm font-bold text-zinc-500">Concorrentes ativos</p>
           <p className="mt-2 text-xl font-black leading-tight">{topCompetitors.length ? topCompetitors.slice(0, 3).join(', ') : 'Sem dados'}</p>
-          <p className="mt-1 text-sm text-zinc-500">Última coleta</p>
+          <p className="mt-1 text-sm text-zinc-500">Janela atual: {formatRecentWindowLabel()}</p>
         </div>
       </section>
 
