@@ -201,3 +201,5 @@ vercel.json                        Cron diário no plano Hobby
 - Integração com WordPress ou outro CMS.
 - Fila de aprovação editorial.
 - Notificação por e-mail/WhatsApp quando surgir notícia com score acima de 85.
+
+Deploy fix
