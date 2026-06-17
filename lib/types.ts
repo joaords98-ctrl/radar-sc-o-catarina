@@ -5,6 +5,7 @@ export type NewsItem = {
   title: string;
   link: string;
   source_name: string | null;
+  source_domain?: string | null;
   published_at: string | null;
   summary: string | null;
   query_label: string | null;
@@ -12,6 +13,13 @@ export type NewsItem = {
   city: string | null;
   region: string | null;
   opportunity_score: number | null;
+  story_key?: string | null;
+  media_mentions_count?: number | null;
+  media_repercussion_score?: number | null;
+  top_media_sources?: string[] | null;
+  competitor_hits_count?: number | null;
+  competitor_names?: string[] | null;
+  competitor_notes?: string | null;
   status: NewsStatus;
   angle: string | null;
   notes: string | null;

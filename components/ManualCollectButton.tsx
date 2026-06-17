@@ -24,7 +24,7 @@ export function ManualCollectButton() {
         throw new Error(data.error || 'Falha ao coletar notícias.');
       }
 
-      setMessage(`Coleta concluída: ${data.inserted ?? 0} inseridas, ${data.skipped ?? 0} ignoradas.`);
+      setMessage(`Coleta concluída: ${data.inserted ?? 0} inseridas, ${data.skipped ?? 0} ignoradas, ${data.storyGroups ?? 0} grupos analisados.`);
       setTimeout(() => window.location.reload(), 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido.');

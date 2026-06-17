@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('news_items')
-    .select('title,link,source_name,published_at,query_label,topic,city,region,opportunity_score,status,angle,summary')
+    .select('title,link,source_name,source_domain,published_at,query_label,topic,city,region,opportunity_score,media_repercussion_score,media_mentions_count,top_media_sources,competitor_hits_count,competitor_names,status,angle,summary')
     .neq('status', 'descartado')
     .order('opportunity_score', { ascending: false })
     .order('published_at', { ascending: false })
@@ -50,11 +50,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  const headers = ['title','link','source_name','published_at','query_label','topic','city','region','opportunity_score','status','angle','summary'];
+  const headers = ['title','link','source_name','source_domain','published_at','query_label','topic','city','region','opportunity_score','media_repercussion_score','media_mentions_count','top_media_sources','competitor_hits_count','competitor_names','status','angle','summary'];
   const rows = [headers.join(';')];
 
   for (const item of data ?? []) {
-    rows.push(headers.map((key) => csvEscape((item as Record<string, unknown>)[key])).join(';'));
+    rows.push(headers.map((key) => {
+      const value = (item as Record<string, unknown>)[key];
+      return csvEscape(Array.isArray(value) ? value.join(' · ') : value);
+    }).join(';'));
   }
 
   return new NextResponse(rows.join('\n'), {

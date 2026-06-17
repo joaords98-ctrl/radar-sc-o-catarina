@@ -1,7 +1,8 @@
 import Parser from 'rss-parser';
 import { getSupabaseAdmin } from './supabaseAdmin';
-import { buildGoogleNewsRssUrl, normalizeExternalId } from './googleNews';
+import { buildGoogleNewsRssUrl, normalizeExternalId, splitGoogleNewsTitle } from './googleNews';
 import { inferAngle, scoreNews } from './scoring';
+import { buildStoryKey, refreshRepercussionMetrics, sourceDomainFromUrl } from './repercussion';
 import type { RssQuery } from './types';
 
 const parser = new Parser();
@@ -35,8 +36,11 @@ export async function collectNews() {
 
         const externalId = normalizeExternalId(item.link);
         const publishedAt = item.isoDate ?? item.pubDate ?? null;
+        const { cleanTitle, sourceName } = splitGoogleNewsTitle(item.title);
+        const storyKey = buildStoryKey(cleanTitle);
+        const sourceDomain = sourceDomainFromUrl(item.link);
         const score = scoreNews({
-          title: item.title,
+          title: cleanTitle,
           summary: item.contentSnippet,
           queryWeight: query.priority_weight,
           publishedAt,
@@ -45,10 +49,12 @@ export async function collectNews() {
         const { error: insertError } = await supabase.from('news_items').upsert(
           {
             external_id: externalId,
-            title: item.title,
+            title: cleanTitle,
             link: item.link,
-            source_name: item.creator ?? feed.title ?? 'Google News',
+            source_name: sourceName ?? item.creator ?? feed.title ?? 'Google News',
             source_url: feed.link ?? null,
+            source_domain: sourceDomain,
+            story_key: storyKey,
             published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
             summary: item.contentSnippet ?? item.content ?? null,
             query_label: query.label,
@@ -56,7 +62,7 @@ export async function collectNews() {
             city: query.city,
             region: query.region,
             opportunity_score: score,
-            angle: inferAngle(item.title, query.topic, query.city),
+            angle: inferAngle(cleanTitle, query.topic, query.city),
             status: 'novo',
           },
           { onConflict: 'external_id', ignoreDuplicates: false },
@@ -74,6 +80,8 @@ export async function collectNews() {
     }
   }
 
+  const repercussion = await refreshRepercussionMetrics(supabase);
+
   await supabase.from('cron_runs').insert({
     job_name: 'collect-news',
     inserted_count: inserted,
@@ -82,5 +90,5 @@ export async function collectNews() {
     errors,
   });
 
-  return { inserted, skipped, errors };
+  return { inserted, skipped, errors, ...repercussion };
 }

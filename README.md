@@ -223,3 +223,47 @@ RADAR_PASSWORD=sua_senha_forte
 ```
 
 Depois faça um novo deploy limpo na Vercel.
+
+---
+
+## 5. Versão v5 — Concorrência e repercussão em outros meios
+
+Esta versão adiciona uma camada de **análise de concorrência**. O sistema passa a olhar não apenas a notícia isolada, mas também se o mesmo assunto aparece em outros veículos/portais mapeados.
+
+### O que mudou
+
+- Nova aba no painel: **Concorrência** (`/competitors`).
+- Novos campos em cada notícia:
+  - `media_mentions_count`: quantidade de veiculações/menções detectadas para a pauta.
+  - `media_repercussion_score`: score de repercussão editorial.
+  - `top_media_sources`: principais veículos/fontes onde a pauta apareceu.
+  - `competitor_hits_count`: quantidade de concorrentes mapeados detectados.
+  - `competitor_names`: nomes dos concorrentes detectados.
+- Nova tabela `source_profiles` com concorrentes e fontes oficiais.
+- Nova migration: `supabase/v5_competition.sql`.
+
+### Atualizar banco existente
+
+Se o banco já está criado, rode no Supabase SQL Editor:
+
+```txt
+supabase/v5_competition.sql
+```
+
+Depois rode uma nova coleta pelo painel ou por:
+
+```txt
+/api/cron/collect-news?secret=SEU_CRON_SECRET
+```
+
+### Interpretação correta do engajamento
+
+O campo de “repercussão” é uma **métrica proxy editorial**, calculada por:
+
+- número de veiculações detectadas;
+- diversidade de fontes;
+- presença em concorrentes mapeados;
+- peso editorial de cada concorrente;
+- força da pauta no score geral.
+
+Ela **não representa likes, comentários, salvamentos ou alcance real do Instagram**, porque esses dados dependem de API oficial/relatórios próprios. Para redes sociais, o caminho correto é importar manualmente os dados do Meta Business Suite ou conectar uma API autorizada.

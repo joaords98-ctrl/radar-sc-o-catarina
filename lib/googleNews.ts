@@ -6,3 +6,11 @@ export function buildGoogleNewsRssUrl(query: string) {
 export function normalizeExternalId(link: string) {
   return link.trim().replace(/[#?].*$/, '').toLowerCase();
 }
+
+export function splitGoogleNewsTitle(title: string) {
+  const parts = title.split(' - ');
+  if (parts.length < 2) return { cleanTitle: title.trim(), sourceName: null };
+  const sourceName = parts.pop()?.trim() || null;
+  const cleanTitle = parts.join(' - ').trim();
+  return { cleanTitle: cleanTitle || title.trim(), sourceName };
+}
