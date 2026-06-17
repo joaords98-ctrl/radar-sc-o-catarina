@@ -13,7 +13,7 @@ export function middleware(req: NextRequest) {
   if (auth?.startsWith('Basic ')) {
     const decoded = Buffer.from(auth.replace('Basic ', ''), 'base64').toString('utf8');
     const [user, pass] = decoded.split(':');
-    if (user === 'admin' && pass === password) {
+    if (user === 'admin' && pass === password.trim()) {
       return NextResponse.next();
     }
   }

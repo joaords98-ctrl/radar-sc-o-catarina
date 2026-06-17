@@ -202,4 +202,24 @@ vercel.json                        Cron diário no plano Hobby
 - Fila de aprovação editorial.
 - Notificação por e-mail/WhatsApp quando surgir notícia com score acima de 85.
 
-Deploy fix
+---
+
+## Atualização v4 — botão de coleta e exportação
+
+Esta versão adiciona:
+
+- Botão **Atualizar agora manualmente** funcionando pelo painel, sem precisar digitar `?secret=` na URL.
+- Rota interna `POST /api/panel/collect-news` para disparar coleta manual.
+- Exportação CSV das notícias em `/api/export/news.csv?secret=SEU_CRON_SECRET`.
+- Correção da dependência `autoprefixer` no `package.json`.
+- Ajuste no login para ignorar espaços acidentais no `RADAR_PASSWORD`.
+
+### Segurança
+
+Se você deixar `RADAR_PASSWORD` vazio/removido, o painel e o botão manual ficam abertos para quem tiver o link. Para uso real, recomenda-se reativar:
+
+```env
+RADAR_PASSWORD=sua_senha_forte
+```
+
+Depois faça um novo deploy limpo na Vercel.
