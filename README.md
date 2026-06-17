@@ -1,5 +1,12 @@
 # Radar SC — O Catarina
 
+## HOTFIX v6.1
+
+- Dependências de build (`autoprefixer`, `postcss`, `tailwindcss`) movidas para `dependencies` para evitar falha de build na Vercel.
+- Arquivo único de SQL criado em `supabase/RUN_THIS_ALL.sql`.
+- Para SQL Editor: abra o arquivo e copie o CONTEÚDO, não o caminho do arquivo.
+
+
 Painel profissional para monitorar notícias de Santa Catarina, concorrentes, temas quentes e oportunidades editoriais para o portal **O Catarina**.
 
 ## O que ele faz
