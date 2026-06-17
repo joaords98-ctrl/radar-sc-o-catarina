@@ -42,7 +42,7 @@ export default async function Home() {
         <StatCard label="Notícias capturadas" value={data.newsCount} hint="Total no banco" />
         <StatCard label="Pautas quentes" value={data.hotCount} hint="Score acima de 70" />
         <StatCard label="Buscas ativas" value={data.queryCount} hint="Cidades, temas e regiões" />
-        <StatCard label="Última coleta" value={data.lastRun ? 'Rodou' : 'Sem coleta'} hint={data.lastRun?.created_at ? new Date(data.lastRun.created_at).toLocaleString('pt-BR') : 'Rode o cron manual'} />
+        <StatCard label="Última coleta" value={data.lastRun ? 'Rodou' : 'Sem coleta'} hint={data.lastRun?.created_at ? new Date(data.lastRun.created_at).toLocaleString('pt-BR') : 'Rode a coleta manual'} />
       </section>
 
       <section className="mt-8 flex items-center justify-between">
@@ -50,7 +50,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black">Oportunidades do dia</h2>
           <p className="text-sm text-zinc-600">Priorize as notícias com maior score e sempre cheque fonte oficial antes de publicar.</p>
         </div>
-        <a href="/api/cron/collect-news" className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-bold text-white">Atualizar agora</a>
+        <a href="/api/cron/collect-news" className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-bold text-white">Atualizar agora manualmente</a>
       </section>
 
       <section className="mt-5 grid gap-4 lg:grid-cols-2">
