@@ -29,3 +29,4 @@ README.md
 ```
 
 Se `Clipping` não aparecer no menu depois do deploy, a Vercel ainda está usando commit antigo ou os arquivos foram enviados para uma pasta interna errada.
+Force deploy v12 clipping
