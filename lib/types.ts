@@ -6,6 +6,7 @@ export type NewsItem = {
   link: string;
   source_name: string | null;
   source_domain?: string | null;
+  source_url?: string | null;
   published_at: string | null;
   summary: string | null;
   query_label: string | null;

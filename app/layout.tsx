@@ -27,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <nav className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 text-sm font-semibold text-zinc-700 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0" aria-label="Navegação principal">
                 <a className="whitespace-nowrap rounded-full bg-zinc-900 px-3 py-2 text-white sm:px-4" href="/">Dashboard</a>
                 <a className="whitespace-nowrap rounded-full bg-zinc-200 px-3 py-2 sm:px-4" href="/stories">Pautas</a>
+                <a className="whitespace-nowrap rounded-full bg-indigo-100 px-3 py-2 text-indigo-900 sm:px-4" href="/clipping">Clipping</a>
                 <a className="whitespace-nowrap rounded-full bg-emerald-100 px-3 py-2 text-emerald-900 sm:px-4" href="/radar">Busca ativa</a>
                 <a className="whitespace-nowrap rounded-full bg-pink-100 px-3 py-2 text-pink-900 sm:px-4" href="/instagram">Instagram</a>
                 <a className="whitespace-nowrap rounded-full bg-zinc-200 px-3 py-2 sm:px-4" href="/news">Notícias</a>

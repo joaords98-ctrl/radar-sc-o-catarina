@@ -1,122 +1,107 @@
-# Radar SC — O Catarina v10
+# Radar SC — O Catarina v11
 
-Painel editorial para encontrar notícias recentes de Santa Catarina, filtrar por cidade/região/tema, analisar concorrência, priorizar pautas e gerar base de texto para site e Instagram.
+Painel editorial para monitorar notícias de Santa Catarina, concorrência, Instagram e clipping do dia.
 
-## Novidades da v10
+## Versão v11 — Clipping inteligente
 
-- Nova página **Instagram Intelligence** em `/instagram`.
-- Ordenação por preferência editorial:
-  - **Maior potencial**
-  - **Mais recente**
-  - **Mais urgente**
-  - **Concorrência forte**
-  - **Potencial Instagram**
-- Filtros combinados por **cidade**, **região**, **tema**, **janela de tempo** e **formato**.
-- Fila específica para Instagram com sugestão de:
-  - Reels
-  - Feed
-  - Stories
-  - Carrossel
-  - Monitorar/apurar
-- Score de **Potencial Instagram** para cada notícia.
-- Cards de pauta agora mostram também a força para Instagram.
-- Gerador de base editorial usa padrão do O Catarina:
-  - site com destaques em `**negrito**`;
-  - Instagram sem `**` e com até 5 hashtags.
-- Reforço de buscas para pautas visuais: vídeo, flagrante, rodovia, acidente, cidade e utilidade pública.
+Novidades principais:
 
-## Como atualizar
+- nova aba `/clipping`;
+- resumo copiável do clipping do dia;
+- filtros por janela, cidade, região, tema, ordem e modo;
+- modos: geral, ainda não publicadas, com fonte oficial e urgentes;
+- ranking de cidades, temas e fontes mais ativas;
+- destaque para quem publicou primeiro;
+- detector de fonte oficial;
+- painel das pautas que o O Catarina ainda não publicou;
+- exportação CSV do clipping em `/api/export/clipping.csv`;
+- mantém abas anteriores: Dashboard, Pautas, Busca Ativa, Instagram, Notícias e Concorrência.
 
-1. Suba os arquivos deste projeto no GitHub.
-2. Faça commit, por exemplo:
+## Rotas principais
 
-```txt
-Update v10 Instagram Intelligence e filtros
-```
+- `/` — Dashboard geral
+- `/clipping` — Clipping inteligente do dia
+- `/stories` — Pautas agrupadas
+- `/radar` — Busca ativa por cidade/tema
+- `/instagram` — Fila de oportunidades para Instagram
+- `/news` — Notícias individuais
+- `/competitors` — Concorrência
+- `/draft?newsId=ID` — Gerar base editorial
 
-3. Na Vercel, aguarde o deploy automático.
-4. No Supabase, rode o conteúdo de:
+## Exemplos de filtros
+
+Mais recentes:
 
 ```txt
-supabase/v10_instagram_intelligence.sql
+/clipping?hours=24&sort=recente
 ```
 
-Se for uma instalação limpa, rode:
+Maior potencial:
+
+```txt
+/clipping?hours=24&sort=potencial
+```
+
+Ainda não publicadas:
+
+```txt
+/clipping?hours=24&mode=pendentes
+```
+
+Com fonte oficial:
+
+```txt
+/clipping?hours=24&mode=oficiais
+```
+
+Por cidade:
+
+```txt
+/clipping?hours=24&city=Itajaí
+```
+
+Por região:
+
+```txt
+/clipping?hours=24&region=Oeste
+```
+
+Exportar CSV:
+
+```txt
+/api/export/clipping.csv?hours=24&sort=potencial
+```
+
+## Atualização no Supabase
+
+Se você já rodou os SQLs anteriores, rode apenas:
+
+```txt
+supabase/v11_clipping_inteligente.sql
+```
+
+Para instalação limpa, rode:
 
 ```txt
 supabase/RUN_THIS_ALL.sql
 ```
 
-## Variáveis de ambiente
+## Variáveis de ambiente na Vercel
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
-RADAR_RECENT_HOURS=24
 RADAR_PASSWORD=
+RADAR_RECENT_HOURS=24
 ```
 
-`RADAR_PASSWORD` é opcional. Se estiver vazio, o painel fica sem Basic Auth.
+## Deploy
 
-## Rotas principais
+Suba o conteúdo desta pasta para o GitHub e faça commit:
 
 ```txt
-/              Dashboard
-/stories       Pautas agrupadas com filtros e ordenação
-/instagram     Fila Instagram / Reels / Feed / Stories
-/radar         Busca ativa por cidade/tema/termo
-/news          Notícias brutas com filtros e ordenação
-/competitors   Concorrência
-/draft?newsId= ID da notícia para gerar base editorial
+Update v11 clipping inteligente
 ```
 
-## Exemplos de uso
-
-Ver pautas de Itajaí por maior potencial:
-
-```txt
-/stories?hours=24&city=Itajaí&sort=potencial
-```
-
-Ver notícias mais recentes de Joinville:
-
-```txt
-/news?hours=12&city=Joinville&sort=recente
-```
-
-Ver oportunidades de Reels:
-
-```txt
-/instagram?hours=24&format=reels&sort=instagram
-```
-
-Ver pautas com concorrência forte:
-
-```txt
-/stories?hours=24&sort=concorrencia
-```
-
-## Coleta automática/manual
-
-Coleta via cron:
-
-```txt
-/api/cron/collect-news?secret=SEU_CRON_SECRET
-```
-
-Coleta pelo painel:
-
-```txt
-/api/panel/collect-news
-```
-
-Busca ativa pelo painel:
-
-```txt
-/api/panel/active-search
-```
-
-## Observação importante
-
-A métrica de Instagram da v10 é uma estimativa editorial baseada em recência, vídeo/imagem, cidade, concorrência, repercussão e risco. Ela **não** mede curtidas, comentários, salvamentos ou alcance real dos concorrentes. Para isso, o caminho correto é importar relatório do Meta Business Suite ou usar API oficial da Meta.
+A Vercel deve fazer o deploy automaticamente.
