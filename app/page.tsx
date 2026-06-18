@@ -7,6 +7,9 @@ import { ManualCollectButton } from '@/components/ManualCollectButton';
 import { formatRecentWindowLabel, getRecentCutoffIso } from '@/lib/recent';
 import { buildStoryGroups } from '@/lib/storyGroups';
 
+const cityFilters = ['Joinville', 'Florianópolis', 'Blumenau', 'Itajaí', 'Chapecó', 'Criciúma', 'Lages', 'Balneário Camboriú'];
+const regionFilters = ['Oeste', 'Sul', 'Norte', 'Vale do Itajaí', 'Litoral Norte', 'Grande Florianópolis'];
+
 export const dynamic = 'force-dynamic';
 
 async function getDashboardData() {
@@ -60,9 +63,9 @@ export default async function Home() {
     <main className="mx-auto max-w-7xl px-6 py-8">
       <section className="mb-8 rounded-3xl bg-zinc-950 p-8 text-white shadow-sm">
         <p className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-400">Editor-chefe assistente</p>
-        <h2 className="mt-3 max-w-4xl text-4xl font-black leading-tight">O que publicar agora em Santa Catarina.</h2>
+        <h2 className="mt-3 max-w-4xl text-4xl font-black leading-tight">O que publicar agora em Santa Catarina, por cidade e região.</h2>
         <p className="mt-4 max-w-4xl text-zinc-300">
-          O Radar agrupa notícias repetidas, mede urgência, concorrência e repercussão editorial para mostrar as pautas que o O Catarina deve disputar primeiro.
+          O Radar agrupa notícias repetidas, filtra conteúdo fora de SC, mede urgência, concorrência e repercussão editorial para mostrar as pautas que o O Catarina deve disputar primeiro.
         </p>
       </section>
 
@@ -73,6 +76,23 @@ export default async function Home() {
         <StatCard label="Buscas ativas" value={data.queryCount} hint="Cidades, temas e regiões" />
         <StatCard label="Concorrentes" value={data.competitorCount} hint="Fontes mapeadas" />
         <StatCard label="Última coleta" value={data.lastRun ? 'Rodou' : 'Sem coleta'} hint={data.lastRun?.created_at ? new Date(data.lastRun.created_at).toLocaleString('pt-BR') : 'Rode a coleta manual'} />
+      </section>
+
+
+
+      <section className="mt-5 rounded-2xl border bg-white p-4 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por cidade</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {cityFilters.map((city) => (
+            <a key={city} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&city=${encodeURIComponent(city)}`}>{city}</a>
+          ))}
+        </div>
+        <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por região</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {regionFilters.map((region) => (
+            <a key={region} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&region=${encodeURIComponent(region)}`}>{region}</a>
+          ))}
+        </div>
       </section>
 
       <section className="mt-8 flex items-center justify-between gap-4">
