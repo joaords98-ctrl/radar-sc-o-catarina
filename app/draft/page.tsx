@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import type { NewsItem } from '@/lib/types';
+import { DraftCopyPanel } from '@/components/CopyBlock';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,28 +44,7 @@ export default async function DraftPage({ searchParams }: { searchParams: Promis
         <p className="mt-4 max-w-3xl text-zinc-300">Use como rascunho, não como cópia automática. Antes de publicar, confirme fonte oficial e ajuste o ângulo do O Catarina.</p>
       </section>
 
-      <section className="mt-6 space-y-5">
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Título site</p>
-          <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{draft.siteTitle}</pre>
-        </div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Linha de apoio</p>
-          <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{draft.supportLine}</pre>
-        </div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Corpo base</p>
-          <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{draft.body}</pre>
-        </div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Instagram</p>
-          <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{draft.instagram}</pre>
-        </div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Roteiro vídeo curto</p>
-          <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{draft.video}</pre>
-        </div>
-      </section>
+      <DraftCopyPanel draft={draft} />
     </main>
   );
 }

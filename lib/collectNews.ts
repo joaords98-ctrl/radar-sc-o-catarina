@@ -2,6 +2,7 @@ import Parser from 'rss-parser';
 import { getSupabaseAdmin } from './supabaseAdmin';
 import { buildGoogleNewsRssUrl, normalizeExternalId, splitGoogleNewsTitle } from './googleNews';
 import { inferAngle, scoreNews } from './scoring';
+import { classifySantaCatarinaNews } from './scGeo';
 import { buildStoryKey, refreshRepercussionMetrics, sourceDomainFromUrl } from './repercussion';
 import { getRecentCutoffIso, getRecentHours, isRecentPublishedAt } from './recent';
 import type { RssQuery } from './types';
@@ -27,6 +28,8 @@ export async function collectNews() {
   let skipped = 0;
   let skippedOld = 0;
   let skippedWithoutDate = 0;
+  let skippedOutOfState = 0;
+  let skippedNoScContext = 0;
   const errors: string[] = [];
 
   for (const query of (queries ?? []) as RssQuery[]) {
@@ -55,8 +58,26 @@ export async function collectNews() {
 
         const externalId = normalizeExternalId(item.link);
         const { cleanTitle, sourceName } = splitGoogleNewsTitle(item.title);
-        const storyKey = buildStoryKey(cleanTitle);
         const sourceDomain = sourceDomainFromUrl(item.link);
+        const scMatch = classifySantaCatarinaNews({
+          title: cleanTitle,
+          summary: item.contentSnippet ?? item.content ?? null,
+          sourceName: sourceName ?? item.creator ?? feed.title ?? 'Google News',
+          sourceDomain,
+          queryCity: query.city,
+          queryRegion: query.region,
+        });
+
+        if (!scMatch.allowed) {
+          skipped += 1;
+          if (scMatch.reason === 'fora_de_sc') skippedOutOfState += 1;
+          else skippedNoScContext += 1;
+          continue;
+        }
+
+        const storyKey = buildStoryKey(cleanTitle);
+        const detectedCity = scMatch.city ?? query.city ?? null;
+        const detectedRegion = scMatch.region ?? query.region ?? null;
         const score = scoreNews({
           title: cleanTitle,
           summary: item.contentSnippet,
@@ -83,10 +104,10 @@ export async function collectNews() {
             summary: item.contentSnippet ?? item.content ?? null,
             query_label: query.label,
             topic: query.topic,
-            city: query.city,
-            region: query.region,
+            city: detectedCity,
+            region: detectedRegion,
             opportunity_score: score,
-            angle: inferAngle(cleanTitle, query.topic, query.city),
+            angle: inferAngle(cleanTitle, query.topic, detectedCity),
             status: 'novo',
           },
           { onConflict: 'external_id', ignoreDuplicates: false },
@@ -123,6 +144,8 @@ export async function collectNews() {
     skipped,
     skippedOld,
     skippedWithoutDate,
+    skippedOutOfState,
+    skippedNoScContext,
     recentHours,
     cutoffIso,
     errors,
