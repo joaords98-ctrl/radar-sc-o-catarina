@@ -22,6 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <nav className="flex flex-wrap gap-3 text-sm font-semibold text-zinc-700">
                   <a className="rounded-full bg-zinc-900 px-4 py-2 text-white" href="/">Dashboard</a>
                   <a className="rounded-full bg-zinc-200 px-4 py-2" href="/stories">Pautas</a>
+                  <a className="rounded-full bg-emerald-100 px-4 py-2 text-emerald-900" href="/radar">Busca ativa</a>
                   <a className="rounded-full bg-zinc-200 px-4 py-2" href="/news">Notícias</a>
                   <a className="rounded-full bg-zinc-200 px-4 py-2" href="/competitors">Concorrência</a>
                 </nav>

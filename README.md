@@ -1,24 +1,35 @@
-# Radar SC — O Catarina v8.1
+# Radar SC — O Catarina v9
 
-Painel de redação para monitorar notícias recentes de Santa Catarina, agrupar pautas, comparar concorrência e decidir o que publicar primeiro.
+Painel editorial para encontrar notícias recentes de Santa Catarina, mapear concorrência, agrupar pautas e gerar base de texto para o O Catarina.
 
-## O que mudou na v8.1
+## Novidades da v9
 
-- Filtro duro para evitar notícias de outros estados.
-- Coleta mais equilibrada: não fica presa apenas em segurança pública.
-- Novas buscas por cidade, região e tema.
-- Atalhos por cidade no dashboard.
-- Aba `Pautas` com filtros de cidade, região e tema.
-- Detecção de contexto catarinense por cidade, região, rodovia SC/BR e fontes locais.
-- Contadores de coleta agora indicam notícias ignoradas por fora de SC ou sem contexto catarinense.
-- Botão **Atualizar agora** fixado no cabeçalho para não sumir ao navegar/rolar a tela.
-- Página de base editorial com botões **Copiar matéria site**, **Copiar tudo** e **Copiar** por bloco.
+- Nova página **Busca ativa** em `/radar`.
+- Busca manual por termo, cidade, região, tema e janela de tempo.
+- Exemplo de uso: `vídeo caminhão tombou SC-155`.
+- O resultado é filtrado para Santa Catarina antes de salvar no Supabase.
+- Resultados salvos já aparecem nas abas **Pautas**, **Notícias** e **Concorrência**.
+- Botão para **copiar consulta** e **copiar resultados**.
+- Reforço de consultas para rodovias de SC: SC-155, BR-101, BR-282 e BR-470.
+- Mais cidades catarinenses reconhecidas pelo filtro geográfico.
 
-## Instalação
+## Como atualizar
 
-Suba os arquivos para o GitHub e aguarde o deploy na Vercel.
+1. Suba os arquivos deste projeto no GitHub.
+2. Na Vercel, aguarde o deploy automático.
+3. No Supabase, rode o conteúdo de:
 
-Variáveis necessárias na Vercel:
+```txt
+supabase/v9_busca_ativa.sql
+```
+
+Se for uma instalação limpa, rode:
+
+```txt
+supabase/RUN_THIS_ALL.sql
+```
+
+## Variáveis de ambiente
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
@@ -30,57 +41,33 @@ RADAR_PASSWORD=
 
 `RADAR_PASSWORD` é opcional. Se estiver vazio, o painel fica sem Basic Auth.
 
-## Supabase
-
-Se já rodou as versões anteriores, rode apenas:
+## Rotas principais
 
 ```txt
-supabase/v8_city_focus.sql
+/              Dashboard
+/stories       Pautas agrupadas
+/radar         Busca ativa por cidade/tema/termo
+/news          Notícias brutas
+/competitors   Concorrência
+/draft?newsId= ID da notícia para gerar base editorial
 ```
 
-Se for instalação nova, rode:
+## Coleta automática/manual
 
-```txt
-supabase/RUN_THIS_ALL.sql
-```
-
-## Coleta manual
+Coleta via cron:
 
 ```txt
 /api/cron/collect-news?secret=SEU_CRON_SECRET
 ```
 
-O retorno da v8.1 pode trazer:
-
-```json
-{
-  "inserted": 40,
-  "updated": 10,
-  "skippedOld": 200,
-  "skippedOutOfState": 12,
-  "skippedNoScContext": 31
-}
-```
-
-`skippedOutOfState` é bom sinal: significa que o sistema está barrando notícias como Ceará, SP, PR etc.
-
-## Páginas principais
-
-- `/` — dashboard geral
-- `/stories` — pautas agrupadas
-- `/news` — links brutos
-- `/competitors` — concorrência
-- `/draft?newsId=ID` — base editorial
-
-## Exemplos de filtros
+Coleta pelo painel:
 
 ```txt
-/stories?hours=24&region=Oeste
-/stories?hours=24&city=Joinville
-/stories?hours=24&topic=Trânsito%2FRodovias
-/news?hours=36&city=Itajaí
+/api/panel/collect-news
 ```
 
-## Observação editorial
+Busca ativa pelo painel:
 
-O Radar mede repercussão editorial por fontes/veículos detectados. Ele não mede curtidas, comentários ou salvamentos reais de Instagram sem importação/API oficial da Meta.
+```txt
+/api/panel/active-search
+```

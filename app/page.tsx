@@ -95,12 +95,15 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mt-8 flex items-center justify-between gap-4">
+      <section className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black">Fila: publicar agora</h2>
           <p className="text-sm text-zinc-600">Prioridade calculada por oportunidade + urgência + concorrência + repercussão. Sempre cheque fonte oficial.</p>
         </div>
-        <ManualCollectButton />
+        <div className="flex flex-wrap items-center gap-2">
+          <a className="rounded-xl bg-emerald-100 px-5 py-3 text-sm font-black text-emerald-900" href="/radar">Buscar notícia específica</a>
+          <ManualCollectButton />
+        </div>
       </section>
 
       <section className="mt-5 grid gap-4 lg:grid-cols-2">

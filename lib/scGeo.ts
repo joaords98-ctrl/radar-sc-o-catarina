@@ -44,6 +44,42 @@ const SC_CITIES: Array<{ name: string; region: string; aliases?: string[] }> = [
   { name: 'Porto Belo', region: 'Litoral Norte' },
   { name: 'Itapema', region: 'Litoral Norte' },
   { name: 'Tijucas', region: 'Grande Florianópolis' },
+  { name: 'Xaxim', region: 'Oeste' },
+  { name: 'Seara', region: 'Oeste' },
+  { name: 'Maravilha', region: 'Oeste' },
+  { name: 'Pinhalzinho', region: 'Oeste' },
+  { name: 'Abelardo Luz', region: 'Oeste' },
+  { name: 'São Lourenço do Oeste', region: 'Oeste', aliases: ['Sao Lourenco do Oeste'] },
+  { name: 'Dionísio Cerqueira', region: 'Oeste', aliases: ['Dionisio Cerqueira'] },
+  { name: 'Curitibanos', region: 'Serra/Meio-Oeste' },
+  { name: 'Campos Novos', region: 'Meio-Oeste' },
+  { name: 'Herval d’Oeste', region: 'Meio-Oeste', aliases: ['Herval d Oeste', 'Herval do Oeste'] },
+  { name: 'Capinzal', region: 'Meio-Oeste' },
+  { name: 'Treze Tílias', region: 'Meio-Oeste', aliases: ['Treze Tilias'] },
+  { name: 'Guaramirim', region: 'Norte/Vale do Itapocu' },
+  { name: 'Schroeder', region: 'Norte/Vale do Itapocu' },
+  { name: 'Araquari', region: 'Norte' },
+  { name: 'Garuva', region: 'Norte' },
+  { name: 'São Francisco do Sul', region: 'Norte', aliases: ['Sao Francisco do Sul'] },
+  { name: 'Porto União', region: 'Planalto Norte', aliases: ['Porto Uniao'] },
+  { name: 'Três Barras', region: 'Planalto Norte', aliases: ['Tres Barras'] },
+  { name: 'Balneário Piçarras', region: 'Litoral Norte', aliases: ['Balneario Picarras'] },
+  { name: 'Bombinhas', region: 'Litoral Norte' },
+  { name: 'Ilhota', region: 'Vale do Itajaí' },
+  { name: 'Pomerode', region: 'Vale do Itajaí' },
+  { name: 'Timbó', region: 'Vale do Itajaí', aliases: ['Timbo'] },
+  { name: 'Ituporanga', region: 'Alto Vale' },
+  { name: 'Taió', region: 'Alto Vale', aliases: ['Taio'] },
+  { name: 'Braço do Norte', region: 'Sul', aliases: ['Braco do Norte'] },
+  { name: 'Orleans', region: 'Sul' },
+  { name: 'Urussanga', region: 'Sul' },
+  { name: 'Sombrio', region: 'Sul' },
+  { name: 'Balneário Rincão', region: 'Sul', aliases: ['Balneario Rincao'] },
+  { name: 'Garopaba', region: 'Sul' },
+  { name: 'São Joaquim', region: 'Serra', aliases: ['Sao Joaquim'] },
+  { name: 'Urubici', region: 'Serra' },
+  { name: 'Otacílio Costa', region: 'Serra', aliases: ['Otacilio Costa'] },
+  { name: 'Correia Pinto', region: 'Serra' },
 ];
 
 const SC_SOURCE_MARKERS = [
@@ -175,4 +211,4 @@ export function inferScCityAndRegion(input: {
   return classifySantaCatarinaNews(input);
 }
 
-export const CITY_FILTERS = ['Joinville', 'Florianópolis', 'Blumenau', 'Itajaí', 'Chapecó', 'Criciúma', 'Lages', 'Balneário Camboriú', 'Oeste', 'Sul'];
+export const CITY_FILTERS = ['Joinville', 'Florianópolis', 'Blumenau', 'Itajaí', 'Chapecó', 'Criciúma', 'Lages', 'Balneário Camboriú', 'Brusque', 'São José', 'Palhoça', 'Jaraguá do Sul', 'Xanxerê', 'Concórdia', 'São Miguel do Oeste', 'Rio do Sul'];
