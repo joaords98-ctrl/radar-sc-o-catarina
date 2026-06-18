@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { formatBrazilDateTime } from '@/lib/date';
 
 type ActiveSearchItem = {
   id?: string;
@@ -185,7 +186,7 @@ export function ActiveSearchClient() {
                       <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-900">{item.topic ?? 'Busca ativa'}</span>
                     </div>
                     <h4 className="mt-3 font-black leading-tight">{item.title}</h4>
-                    <p className="mt-2 text-xs font-semibold text-zinc-500">{item.sourceName ?? item.sourceDomain ?? 'Fonte não identificada'} · {new Date(item.publishedAt).toLocaleString('pt-BR')}</p>
+                    <p className="mt-2 text-xs font-semibold text-zinc-500">{item.sourceName ?? item.sourceDomain ?? 'Fonte não identificada'} · {formatBrazilDateTime(item.publishedAt)}</p>
                     {item.summary ? <p className="mt-2 text-sm text-zinc-600 line-clamp-3">{item.summary}</p> : null}
                     <div className="mt-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                       <a href={item.link} target="_blank" rel="noreferrer" className="rounded-xl bg-zinc-900 px-3 py-2 text-center text-xs font-bold text-white">Abrir fonte</a>

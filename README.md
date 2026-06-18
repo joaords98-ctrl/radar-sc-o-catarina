@@ -1,107 +1,31 @@
-# Radar SC — O Catarina v11
+# Radar SC — O Catarina v12
 
-Painel editorial para monitorar notícias de Santa Catarina, concorrência, Instagram e clipping do dia.
-
-## Versão v11 — Clipping inteligente
-
-Novidades principais:
-
-- nova aba `/clipping`;
-- resumo copiável do clipping do dia;
-- filtros por janela, cidade, região, tema, ordem e modo;
-- modos: geral, ainda não publicadas, com fonte oficial e urgentes;
-- ranking de cidades, temas e fontes mais ativas;
-- destaque para quem publicou primeiro;
-- detector de fonte oficial;
-- painel das pautas que o O Catarina ainda não publicou;
-- exportação CSV do clipping em `/api/export/clipping.csv`;
-- mantém abas anteriores: Dashboard, Pautas, Busca Ativa, Instagram, Notícias e Concorrência.
+Versão simplificada para operação diária: Clipping primeiro, Busca ativa, Instagram e Pautas.
 
 ## Rotas principais
 
-- `/` — Dashboard geral
-- `/clipping` — Clipping inteligente do dia
-- `/stories` — Pautas agrupadas
-- `/radar` — Busca ativa por cidade/tema
-- `/instagram` — Fila de oportunidades para Instagram
-- `/news` — Notícias individuais
-- `/competitors` — Concorrência
-- `/draft?newsId=ID` — Gerar base editorial
+- `/` — início simplificado
+- `/clipping` — clipping do dia
+- `/radar` — busca ativa por cidade/tema/rodovia
+- `/instagram` — fila Instagram
+- `/stories` — pautas agrupadas
+- `/news` — notícias brutas
+- `/competitors` — concorrência
 
-## Exemplos de filtros
+## Atualização
 
-Mais recentes:
+Suba o conteúdo desta pasta para a raiz do GitHub e faça um commit novo.
 
-```txt
-/clipping?hours=24&sort=recente
+A raiz precisa ficar assim:
+
+```
+app/
+components/
+lib/
+supabase/
+package.json
+vercel.json
+README.md
 ```
 
-Maior potencial:
-
-```txt
-/clipping?hours=24&sort=potencial
-```
-
-Ainda não publicadas:
-
-```txt
-/clipping?hours=24&mode=pendentes
-```
-
-Com fonte oficial:
-
-```txt
-/clipping?hours=24&mode=oficiais
-```
-
-Por cidade:
-
-```txt
-/clipping?hours=24&city=Itajaí
-```
-
-Por região:
-
-```txt
-/clipping?hours=24&region=Oeste
-```
-
-Exportar CSV:
-
-```txt
-/api/export/clipping.csv?hours=24&sort=potencial
-```
-
-## Atualização no Supabase
-
-Se você já rodou os SQLs anteriores, rode apenas:
-
-```txt
-supabase/v11_clipping_inteligente.sql
-```
-
-Para instalação limpa, rode:
-
-```txt
-supabase/RUN_THIS_ALL.sql
-```
-
-## Variáveis de ambiente na Vercel
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-CRON_SECRET=
-RADAR_PASSWORD=
-RADAR_RECENT_HOURS=24
-```
-
-## Deploy
-
-Suba o conteúdo desta pasta para o GitHub e faça commit:
-
-```txt
-Update v11 clipping inteligente
-```
-
-A Vercel deve fazer o deploy automaticamente.
+Se `Clipping` não aparecer no menu depois do deploy, a Vercel ainda está usando commit antigo ou os arquivos foram enviados para uma pasta interna errada.

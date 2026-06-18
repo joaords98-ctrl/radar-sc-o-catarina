@@ -5,6 +5,7 @@ import { getSortFromParam, sortLabels, sortStoryGroups } from '@/lib/sort';
 import { SortControls } from '@/components/SortControls';
 import { StatCard } from '@/components/StatCard';
 import { CopyTextButton } from '@/components/CopyTextButton';
+import { formatBrazilDateTime } from '@/lib/date';
 import { buildClippingReport, clippingActionFor, clippingActionLabel, hasOfficialSource } from '@/lib/clipping';
 import { instagramPotentialForGroup, suggestedInstagramFormatForGroup } from '@/lib/instagram';
 
@@ -75,8 +76,8 @@ function ClippingStoryCard({ group, index }: { group: StoryGroup; index: number 
   const instagramPotential = instagramPotentialForGroup(group);
   const published = isPublishedByOCatarina(group);
   const official = hasOfficialSource(group);
-  const firstTime = group.firstPublishedAt ? new Date(group.firstPublishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'sem data';
-  const latestTime = group.latestPublishedAt ? new Date(group.latestPublishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'sem data';
+  const firstTime = group.firstPublishedAt ? formatBrazilDateTime(group.firstPublishedAt, { dateStyle: 'short', timeStyle: 'short' }) : 'sem data';
+  const latestTime = group.latestPublishedAt ? formatBrazilDateTime(group.latestPublishedAt, { dateStyle: 'short', timeStyle: 'short' }) : 'sem data';
 
   return (
     <article className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">

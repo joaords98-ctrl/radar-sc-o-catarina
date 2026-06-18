@@ -1,11 +1,11 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { StatCard } from '@/components/StatCard';
-import { NewsCard } from '@/components/NewsCard';
 import { StoryClusterCard } from '@/components/StoryClusterCard';
 import type { NewsItem } from '@/lib/types';
 import { ManualCollectButton } from '@/components/ManualCollectButton';
 import { formatRecentWindowLabel, getRecentCutoffIso } from '@/lib/recent';
 import { buildStoryGroups } from '@/lib/storyGroups';
+import { formatBrazilDateTimeWithZone } from '@/lib/date';
 
 const cityFilters = ['Joinville', 'Florianópolis', 'Blumenau', 'Itajaí', 'Chapecó', 'Criciúma', 'Lages', 'Balneário Camboriú'];
 const regionFilters = ['Oeste', 'Sul', 'Norte', 'Vale do Itajaí', 'Litoral Norte', 'Grande Florianópolis'];
@@ -36,9 +36,6 @@ async function getDashboardData() {
 
   const items = (latest ?? []) as NewsItem[];
   const storyGroups = buildStoryGroups(items, 16);
-  const urgentGroups = storyGroups.filter((group) => group.urgencyScore >= 75).slice(0, 4);
-  const vacuumGroups = storyGroups.filter((group) => group.vacuum).slice(0, 4);
-  const competitorGroups = storyGroups.filter((group) => group.competitionScore >= 60).slice(0, 4);
 
   return {
     newsCount: newsCount ?? 0,
@@ -46,127 +43,97 @@ async function getDashboardData() {
     queryCount: queryCount ?? 0,
     repercussionCount: repercussionCount ?? 0,
     competitorCount: competitorCount ?? 0,
-    latest: items.slice(0, 4),
     storyGroups,
-    urgentGroups,
-    vacuumGroups,
-    competitorGroups,
     lastRun: runs?.[0] ?? null,
     windowLabel: formatRecentWindowLabel(),
   };
 }
 
+function ActionCard({ title, text, href, label, tone = 'dark' }: { title: string; text: string; href: string; label: string; tone?: 'dark' | 'green' | 'pink' | 'blue' }) {
+  const styles = {
+    dark: 'bg-zinc-950 text-white',
+    green: 'bg-emerald-100 text-emerald-950 ring-1 ring-emerald-200',
+    pink: 'bg-pink-100 text-pink-950 ring-1 ring-pink-200',
+    blue: 'bg-blue-100 text-blue-950 ring-1 ring-blue-200',
+  }[tone];
+
+  return (
+    <a href={href} className={`rounded-2xl p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${styles}`}>
+      <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70">{label}</p>
+      <h3 className="mt-3 text-xl font-black leading-tight">{title}</h3>
+      <p className="mt-3 text-sm leading-6 opacity-80">{text}</p>
+    </a>
+  );
+}
+
 export default async function Home() {
   const data = await getDashboardData();
+  const topGroups = data.storyGroups.slice(0, 4);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
-      <section className="mb-8 rounded-2xl bg-zinc-950 p-5 sm:rounded-3xl sm:p-8 text-white shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] sm:text-sm sm:tracking-[0.25em] text-zinc-400">Editor-chefe assistente</p>
-        <h2 className="mt-3 max-w-4xl text-2xl font-black leading-tight sm:text-4xl">O que publicar agora em Santa Catarina, no site e no Instagram.</h2>
-        <p className="mt-4 max-w-4xl text-sm leading-6 text-zinc-300 sm:text-base">
-          O Radar v10 agrupa notícias, filtra conteúdo fora de SC, mede urgência, concorrência, repercussão e potencial para Instagram. Agora você escolhe a ordem: mais recente, maior potencial, concorrência forte ou melhor pauta para Reels/Feed.
-        </p>
+      <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">Mesa de operação</p>
+            <h2 className="mt-3 max-w-4xl text-3xl font-black leading-tight text-zinc-950 sm:text-5xl">Clipping primeiro. Pauta depois.</h2>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-600 sm:text-base">
+              Use o Radar em ordem simples: veja o clipping do dia, encontre o que O Catarina ainda não publicou, gere base para site/Instagram e acompanhe a concorrência.
+            </p>
+          </div>
+          <div className="rounded-2xl bg-zinc-100 p-4 text-sm text-zinc-700 lg:w-80">
+            <p className="font-black text-zinc-950">Última coleta</p>
+            <p className="mt-1">{data.lastRun?.created_at ? formatBrazilDateTimeWithZone(data.lastRun.created_at) : 'Sem coleta recente'}</p>
+            <div className="mt-3">
+              <ManualCollectButton />
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <ActionCard label="1º passo" title="Abrir clipping" text="Resumo do dia, fontes, cidades quentes e pautas que ainda não viraram publicação." href="/clipping?hours=24&sort=potencial" tone="dark" />
+        <ActionCard label="2º passo" title="Buscar notícia específica" text="Digite cidade, rodovia, tema ou frase da notícia para caçar pauta em SC." href="/radar" tone="green" />
+        <ActionCard label="3º passo" title="Instagram agora" text="Veja o que rende Reels, Feed ou Story, com score de potencial para redes." href="/instagram?hours=24&sort=instagram" tone="pink" />
+        <ActionCard label="4º passo" title="Pautas agrupadas" text="Veja eventos únicos, concorrentes, primeiro veículo e ação sugerida." href="/stories?hours=24&sort=potencial" tone="blue" />
+      </section>
+
+      <section className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Notícias do dia" value={data.newsCount} hint={data.windowLabel} />
-        <StatCard label="Pautas agrupadas" value={data.storyGroups.length} hint="Eventos únicos detectados" />
+        <StatCard label="Pautas agrupadas" value={data.storyGroups.length} hint="Eventos únicos" />
         <StatCard label="Pautas quentes" value={data.hotCount} hint="Score acima de 70" />
-        <StatCard label="Buscas ativas" value={data.queryCount} hint="Cidades, temas e regiões" />
+        <StatCard label="Buscas ativas" value={data.queryCount} hint="Cidades e temas" />
         <StatCard label="Concorrentes" value={data.competitorCount} hint="Fontes mapeadas" />
-        <StatCard label="Última coleta" value={data.lastRun ? 'Rodou' : 'Sem coleta'} hint={data.lastRun?.created_at ? new Date(data.lastRun.created_at).toLocaleString('pt-BR') : 'Rode a coleta manual'} />
+        <StatCard label="Repercussão" value={data.repercussionCount} hint="Pautas com tração" />
       </section>
-
-
 
       <section className="mt-5 rounded-2xl border bg-white p-4 shadow-sm">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por cidade</p>
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalhos rápidos</p>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+          <a className="rounded-xl bg-zinc-950 px-3 py-2 text-sm font-black text-white" href="/clipping?hours=24&mode=pendentes">Não publicadas</a>
+          <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/clipping?hours=24&mode=urgentes">Urgentes</a>
+          <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/clipping?hours=24&mode=oficiais">Com fonte oficial</a>
+          <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/news?hours=24&sort=recente">Mais recentes</a>
           {cityFilters.map((city) => (
-            <a key={city} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&city=${encodeURIComponent(city)}`}>{city}</a>
+            <a key={city} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/clipping?hours=24&city=${encodeURIComponent(city)}`}>{city}</a>
           ))}
-        </div>
-        <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por região</p>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {regionFilters.map((region) => (
-            <a key={region} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&region=${encodeURIComponent(region)}`}>{region}</a>
+            <a key={region} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/clipping?hours=24&region=${encodeURIComponent(region)}`}>{region}</a>
           ))}
         </div>
       </section>
 
-      <section className="mt-8 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
+      <section className="mt-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-black sm:text-2xl">Fila: publicar agora</h2>
-          <p className="text-sm text-zinc-600">Prioridade calculada por oportunidade + urgência + concorrência + repercussão. Sempre cheque fonte oficial.</p>
+          <h2 className="text-xl font-black sm:text-2xl">Fila resumida</h2>
+          <p className="text-sm text-zinc-600">As 4 pautas com maior prioridade agora. Para a visão completa, use Clipping.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <a className="w-full rounded-xl bg-emerald-100 px-5 py-3 text-center text-sm font-black text-emerald-900 sm:w-auto" href="/radar">Buscar notícia específica</a>
-          <a className="w-full rounded-xl bg-pink-100 px-5 py-3 text-center text-sm font-black text-pink-900 sm:w-auto" href="/instagram?sort=instagram">Instagram agora</a>
-          <ManualCollectButton />
-        </div>
+        <a className="rounded-xl bg-zinc-950 px-5 py-3 text-center text-sm font-black text-white" href="/clipping?hours=24&sort=potencial">Ver clipping completo</a>
       </section>
 
       <section className="mt-5 grid gap-4 lg:grid-cols-2">
-        {data.storyGroups.slice(0, 6).map((group) => <StoryClusterCard key={group.id} group={group} />)}
-        {data.storyGroups.length === 0 ? <p className="rounded-2xl bg-white p-6 text-zinc-600">Nenhuma pauta recente agrupada. Rode uma coleta.</p> : null}
-      </section>
-
-      <section className="mt-10 grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-black">Urgente agora</h3>
-          <p className="mt-1 text-sm text-zinc-500">Pautas com publicação muito recente.</p>
-          <div className="mt-4 space-y-3">
-            {data.urgentGroups.map((group) => (
-              <a key={group.id} className="block rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-100" href={`/stories?focus=${encodeURIComponent(group.id)}`}>
-                <p className="font-black leading-tight">{group.headline}</p>
-                <p className="mt-1 text-xs text-zinc-500">Urgência {group.urgencyScore} · {group.city ?? group.region ?? 'SC'}</p>
-              </a>
-            ))}
-            {!data.urgentGroups.length ? <p className="text-sm text-zinc-500">Sem urgências detectadas.</p> : null}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-black">Concorrência entrou</h3>
-          <p className="mt-1 text-sm text-zinc-500">Pautas já publicadas por meios mapeados.</p>
-          <div className="mt-4 space-y-3">
-            {data.competitorGroups.map((group) => (
-              <a key={group.id} className="block rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-100" href={`/stories?focus=${encodeURIComponent(group.id)}`}>
-                <p className="font-black leading-tight">{group.headline}</p>
-                <p className="mt-1 text-xs text-zinc-500">{group.competitors.slice(0, 3).join(', ') || 'Concorrente'} · score {group.competitionScore}</p>
-              </a>
-            ))}
-            {!data.competitorGroups.length ? <p className="text-sm text-zinc-500">Sem concorrência forte detectada.</p> : null}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-black">Vácuo editorial</h3>
-          <p className="mt-1 text-sm text-zinc-500">Pautas quentes ainda pouco saturadas.</p>
-          <div className="mt-4 space-y-3">
-            {data.vacuumGroups.map((group) => (
-              <a key={group.id} className="block rounded-xl bg-lime-50 p-3 ring-1 ring-lime-100" href={`/stories?focus=${encodeURIComponent(group.id)}`}>
-                <p className="font-black leading-tight">{group.headline}</p>
-                <p className="mt-1 text-xs text-lime-900">Boa chance de chegar antes · prioridade {group.score}</p>
-              </a>
-            ))}
-            {!data.vacuumGroups.length ? <p className="text-sm text-zinc-500">Nenhum vácuo claro neste momento.</p> : null}
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-10">
-        <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <h2 className="text-xl font-black sm:text-2xl">Últimas notícias brutas</h2>
-            <p className="text-sm text-zinc-600">Links individuais antes do agrupamento.</p>
-          </div>
-          <a className="w-full rounded-xl bg-zinc-900 px-5 py-3 text-center text-sm font-bold text-white sm:w-auto" href="/stories">Ver grupos</a>
-        </div>
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {data.latest.map((item) => <NewsCard key={item.id} item={item} />)}
-        </div>
+        {topGroups.map((group) => <StoryClusterCard key={group.id} group={group} />)}
+        {topGroups.length === 0 ? <p className="rounded-2xl bg-white p-6 text-zinc-600">Nenhuma pauta recente agrupada. Rode uma coleta.</p> : null}
       </section>
     </main>
   );

@@ -1,6 +1,7 @@
 import type { NewsItem } from '@/lib/types';
 import type { StoryGroup } from '@/lib/storyGroups';
 import { instagramPotentialForGroup } from '@/lib/instagram';
+import { formatBrazilDateTime } from '@/lib/date';
 
 export type ClippingAction = 'publicar_agora' | 'apurar' | 'monitorar' | 'descartar';
 
@@ -34,10 +35,7 @@ const officialHints = [
 ];
 
 function timeLabel(iso: string | null) {
-  if (!iso) return 'sem data';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return 'sem data';
-  return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  return formatBrazilDateTime(iso, { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function isOfficialText(text: string) {
