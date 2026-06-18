@@ -60,16 +60,16 @@ export default async function Home() {
   const data = await getDashboardData();
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
-      <section className="mb-8 rounded-3xl bg-zinc-950 p-8 text-white shadow-sm">
-        <p className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-400">Editor-chefe assistente</p>
-        <h2 className="mt-3 max-w-4xl text-4xl font-black leading-tight">O que publicar agora em Santa Catarina, por cidade e região.</h2>
-        <p className="mt-4 max-w-4xl text-zinc-300">
-          O Radar agrupa notícias repetidas, filtra conteúdo fora de SC, mede urgência, concorrência e repercussão editorial para mostrar as pautas que o O Catarina deve disputar primeiro.
+    <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+      <section className="mb-8 rounded-2xl bg-zinc-950 p-5 sm:rounded-3xl sm:p-8 text-white shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] sm:text-sm sm:tracking-[0.25em] text-zinc-400">Editor-chefe assistente</p>
+        <h2 className="mt-3 max-w-4xl text-2xl font-black leading-tight sm:text-4xl">O que publicar agora em Santa Catarina, no site e no Instagram.</h2>
+        <p className="mt-4 max-w-4xl text-sm leading-6 text-zinc-300 sm:text-base">
+          O Radar v10 agrupa notícias, filtra conteúdo fora de SC, mede urgência, concorrência, repercussão e potencial para Instagram. Agora você escolhe a ordem: mais recente, maior potencial, concorrência forte ou melhor pauta para Reels/Feed.
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-6">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Notícias do dia" value={data.newsCount} hint={data.windowLabel} />
         <StatCard label="Pautas agrupadas" value={data.storyGroups.length} hint="Eventos únicos detectados" />
         <StatCard label="Pautas quentes" value={data.hotCount} hint="Score acima de 70" />
@@ -82,26 +82,27 @@ export default async function Home() {
 
       <section className="mt-5 rounded-2xl border bg-white p-4 shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por cidade</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {cityFilters.map((city) => (
             <a key={city} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&city=${encodeURIComponent(city)}`}>{city}</a>
           ))}
         </div>
         <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Atalho por região</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {regionFilters.map((region) => (
             <a key={region} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/stories?hours=24&region=${encodeURIComponent(region)}`}>{region}</a>
           ))}
         </div>
       </section>
 
-      <section className="mt-8 flex flex-wrap items-center justify-between gap-4">
+      <section className="mt-8 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-black">Fila: publicar agora</h2>
+          <h2 className="text-xl font-black sm:text-2xl">Fila: publicar agora</h2>
           <p className="text-sm text-zinc-600">Prioridade calculada por oportunidade + urgência + concorrência + repercussão. Sempre cheque fonte oficial.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a className="rounded-xl bg-emerald-100 px-5 py-3 text-sm font-black text-emerald-900" href="/radar">Buscar notícia específica</a>
+          <a className="w-full rounded-xl bg-emerald-100 px-5 py-3 text-center text-sm font-black text-emerald-900 sm:w-auto" href="/radar">Buscar notícia específica</a>
+          <a className="w-full rounded-xl bg-pink-100 px-5 py-3 text-center text-sm font-black text-pink-900 sm:w-auto" href="/instagram?sort=instagram">Instagram agora</a>
           <ManualCollectButton />
         </div>
       </section>
@@ -156,12 +157,12 @@ export default async function Home() {
       </section>
 
       <section className="mt-10">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h2 className="text-2xl font-black">Últimas notícias brutas</h2>
+            <h2 className="text-xl font-black sm:text-2xl">Últimas notícias brutas</h2>
             <p className="text-sm text-zinc-600">Links individuais antes do agrupamento.</p>
           </div>
-          <a className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-bold text-white" href="/stories">Ver grupos</a>
+          <a className="w-full rounded-xl bg-zinc-900 px-5 py-3 text-center text-sm font-bold text-white sm:w-auto" href="/stories">Ver grupos</a>
         </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {data.latest.map((item) => <NewsCard key={item.id} item={item} />)}

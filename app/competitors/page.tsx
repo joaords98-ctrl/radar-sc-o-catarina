@@ -58,29 +58,29 @@ export default async function CompetitorsPage() {
   const topCompetitors = uniq(withCompetitor.flatMap((group) => group.competitors)).slice(0, 12);
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
-      <section className="rounded-3xl bg-zinc-950 p-8 text-white shadow-sm">
-        <p className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-400">Análise da concorrência</p>
-        <h2 className="mt-3 max-w-4xl text-4xl font-black leading-tight">Quem publicou primeiro, quem repercutiu e onde o O Catarina deve entrar.</h2>
-        <p className="mt-4 max-w-4xl text-zinc-300">
+    <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+      <section className="rounded-2xl bg-zinc-950 p-5 sm:rounded-3xl sm:p-8 text-white shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] sm:text-sm sm:tracking-[0.25em] text-zinc-400">Análise da concorrência</p>
+        <h2 className="mt-3 max-w-4xl text-2xl font-black leading-tight sm:text-4xl">Quem publicou primeiro, quem repercutiu e onde o O Catarina deve entrar.</h2>
+        <p className="mt-4 max-w-4xl text-sm leading-6 text-zinc-300 sm:text-base">
           O painel mostra apenas pautas recentes ({formatRecentWindowLabel()}) e calcula um score de concorrência por número de veiculações, diversidade de fontes e presença em veículos mapeados. Não é métrica oficial de likes/comentários do Instagram.
         </p>
       </section>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-4">
+      <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm font-bold text-zinc-500">Fontes concorrentes</p>
-          <p className="mt-2 text-4xl font-black">{sources.length}</p>
+          <p className="mt-2 text-3xl font-black sm:text-4xl">{sources.length}</p>
           <p className="mt-1 text-sm text-zinc-500">Portais e meios cadastrados</p>
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm font-bold text-zinc-500">Pautas com concorrente</p>
-          <p className="mt-2 text-4xl font-black">{withCompetitor.length}</p>
+          <p className="mt-2 text-3xl font-black sm:text-4xl">{withCompetitor.length}</p>
           <p className="mt-1 text-sm text-zinc-500">Eventos detectados nos veículos mapeados</p>
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm font-bold text-zinc-500">Alta repercussão</p>
-          <p className="mt-2 text-4xl font-black">{withRepercussion.length}</p>
+          <p className="mt-2 text-3xl font-black sm:text-4xl">{withRepercussion.length}</p>
           <p className="mt-1 text-sm text-zinc-500">Eventos com tração editorial</p>
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-sm">
@@ -92,15 +92,15 @@ export default async function CompetitorsPage() {
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div>
-          <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="mb-4 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <h3 className="text-2xl font-black">Pautas por concorrência</h3>
+              <h3 className="text-xl font-black sm:text-2xl">Pautas por concorrência</h3>
               <p className="text-sm text-zinc-600">Agrupadas por evento, não por link isolado.</p>
             </div>
-            <a className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white" href="/stories">Abrir pautas</a>
+            <a className="w-full rounded-xl bg-zinc-900 px-4 py-2 text-center text-sm font-bold text-white sm:w-auto" href="/stories">Abrir pautas</a>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border bg-white shadow-sm">
             <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-500">
                 <tr>

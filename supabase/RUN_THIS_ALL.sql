@@ -268,6 +268,8 @@ from news_items n
 left join lateral unnest(coalesce(n.competitor_names, '{}'::text[])) as cn(competitor_name) on true
 where n.story_key is not null
 group by n.story_key;
+
+
 -- Radar SC v5 — Análise de concorrência e repercussão em outros veículos
 -- Rode este arquivo no Supabase SQL Editor após a v4, ou rode o schema.sql completo em projeto novo.
 
@@ -353,6 +355,8 @@ from news_items n
 left join lateral unnest(coalesce(n.competitor_names, '{}'::text[])) as cn(competitor_name) on true
 where n.story_key is not null
 group by n.story_key;
+
+
 -- Radar SC v6 — Notícias do dia / janela recente
 -- Rode depois da v5. O código passa a filtrar por RADAR_RECENT_HOURS, padrão 24h.
 
@@ -364,6 +368,8 @@ create index if not exists idx_news_recent_published on news_items(published_at 
 
 -- As consultas antigas continuam válidas. O código adiciona automaticamente when:1d no Google News
 -- e ignora qualquer item com published_at fora da janela recente.
+
+
 -- Radar SC v7 — campos opcionais para operação editorial.
 -- Execute após schema.sql, v5_competition.sql e v6_recent_only.sql.
 
@@ -378,6 +384,8 @@ alter table news_items
 create index if not exists idx_news_editorial_risk on news_items(editorial_risk);
 create index if not exists idx_news_suggested_format on news_items(suggested_format);
 create index if not exists idx_news_deadline_at on news_items(deadline_at);
+
+
 -- Radar SC v8 — filtro Santa Catarina + busca por cidade/região + pauta equilibrada
 -- Rode no Supabase SQL Editor depois da v7.
 
@@ -474,6 +482,8 @@ update news_items
 set topic = 'Trânsito/Rodovias'
 where published_at >= now() - interval '48 hours'
 and lower(title || ' ' || coalesce(summary,'')) like any(array['%acidente%', '%rodovia%', '%trânsito%', '%transito%', '%caminhão%', '%caminhao%', '%tombou%', '%br-101%', '%sc-155%']);
+
+
 -- Radar SC v9 — busca ativa + reforço de consultas por cidade/rodovia
 -- Rode depois da v8. Pode rodar mais de uma vez.
 
@@ -499,3 +509,38 @@ and lower(title || ' ' || coalesce(summary,'')) like any(array[
   '%vídeo%', '%video%', '%caminhão%', '%caminhao%', '%tombou%', '%rodovia%', '%br-101%', '%br 101%', '%br-282%', '%br 282%', '%br-470%', '%br 470%', '%sc-155%', '%sc 155%'
 ])
 and lower(title || ' ' || coalesce(summary,'')) like any(array['%acidente%', '%trânsito%', '%transito%', '%rodovia%', '%tombou%']);
+
+
+-- Radar SC v10 — Instagram Intelligence + reforço de buscas visuais
+-- Opcional. Rode depois da v9 para melhorar pautas com vídeo, imagem, cidade e potencial de redes.
+
+update rss_queries
+set enabled = false
+where label in ('SC Segurança pública');
+
+delete from rss_queries where label like 'V10 %';
+
+insert into rss_queries (label, query, topic, city, region, priority_weight, enabled) values
+('V10 Reels SC vídeo forte','"Santa Catarina" vídeo mostra momento flagrante imagens acidente caminhão carro rodovia', 'Trânsito/Rodovias', null, 'SC', 7, true),
+('V10 Stories utilidade pública SC','"Santa Catarina" alerta trânsito bloqueio interdição chuva defesa civil serviço hoje', 'Serviços Públicos', null, 'SC', 6, true),
+('V10 Carrossel política local SC','"Santa Catarina" prefeito vereadores câmara contrato licitação denúncia investigação município', 'Política', null, 'SC', 6, true),
+('V10 Oeste visual','"Oeste de Santa Catarina" vídeo acidente caminhão carro tombou rodovia cidade hoje', 'Trânsito/Rodovias', null, 'Oeste', 6, true),
+('V10 Vale visual','"Vale do Itajaí" vídeo acidente trânsito rodovia prefeitura problema moradores hoje', 'Radar Regional', null, 'Vale do Itajaí', 5, true),
+('V10 Litoral Norte visual','"Litoral Norte" Itajaí Balneário Camboriú vídeo acidente trânsito turismo prefeitura hoje', 'Radar Regional', null, 'Litoral Norte', 5, true),
+('V10 Sul visual','"Sul de Santa Catarina" vídeo acidente trânsito prefeitura moradores Criciúma Tubarão hoje', 'Radar Regional', null, 'Sul', 5, true),
+('V10 Joinville Instagram','Joinville vídeo mostra acidente trânsito prefeitura moradores flagrante hoje', 'Radar Local', 'Joinville', 'Norte', 5, true),
+('V10 Florianópolis Instagram','Florianópolis Floripa vídeo mostra acidente trânsito prefeitura moradores flagrante hoje', 'Radar Local', 'Florianópolis', 'Grande Florianópolis', 5, true),
+('V10 Blumenau Instagram','Blumenau vídeo mostra acidente trânsito prefeitura moradores flagrante hoje', 'Radar Local', 'Blumenau', 'Vale do Itajaí', 5, true),
+('V10 Itajaí Instagram','Itajaí vídeo mostra acidente trânsito BR-101 prefeitura moradores flagrante hoje', 'Radar Local', 'Itajaí', 'Litoral Norte', 5, true),
+('V10 Chapecó Instagram','Chapecó vídeo mostra acidente trânsito prefeitura moradores flagrante hoje', 'Radar Local', 'Chapecó', 'Oeste', 5, true);
+
+-- Ajuste de tema para pautas visuais que rendem Instagram.
+update news_items
+set topic = 'Trânsito/Rodovias'
+where published_at >= now() - interval '72 hours'
+and lower(title || ' ' || coalesce(summary,'')) like any(array[
+  '%vídeo%', '%video%', '%flagra%', '%imagens%', '%mostra%', '%câmera%', '%camera%'
+])
+and lower(title || ' ' || coalesce(summary,'')) like any(array[
+  '%acidente%', '%rodovia%', '%trânsito%', '%transito%', '%caminhão%', '%caminhao%', '%carro%', '%tombou%'
+]);

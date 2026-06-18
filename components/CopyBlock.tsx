@@ -45,7 +45,7 @@ function CopyButton({ text, label = 'Copiar' }: { text: string; label?: string }
     <button
       type="button"
       onClick={handleCopy}
-      className="rounded-xl bg-zinc-950 px-4 py-2 text-xs font-black text-white transition hover:bg-zinc-800"
+      className="w-full rounded-xl bg-zinc-950 px-4 py-2 text-xs font-black text-white transition hover:bg-zinc-800 sm:w-auto"
     >
       {copied ? 'Copiado!' : label}
     </button>
@@ -54,12 +54,12 @@ function CopyButton({ text, label = 'Copiar' }: { text: string; label?: string }
 
 function DraftSection({ label, text }: { label: string; text: string }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
+    <div className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">{label}</p>
         <CopyButton text={text} />
       </div>
-      <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm leading-6">{text}</pre>
+      <pre className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-zinc-50 p-3 text-sm leading-6 sm:p-4">{text}</pre>
     </div>
   );
 }
@@ -84,12 +84,12 @@ export function DraftCopyPanel({ draft }: { draft: DraftContent }) {
 
   return (
     <section className="mt-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="flex flex-col items-stretch justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:p-5">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Copiar conteúdo</p>
           <p className="mt-1 text-sm text-zinc-600">Use os botões para copiar a matéria, legenda ou roteiro depois de gerar a base.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           <CopyButton text={siteArticle} label="Copiar matéria site" />
           <CopyButton text={fullText} label="Copiar tudo" />
         </div>

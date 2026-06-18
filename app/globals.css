@@ -7,6 +7,15 @@
   --foreground: #171717;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background: var(--background);
@@ -15,3 +24,10 @@ body {
 }
 
 a { color: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
