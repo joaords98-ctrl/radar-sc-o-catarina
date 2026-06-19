@@ -61,3 +61,17 @@ Depois do deploy, confira se aparecem as rotas:
 /instagram
 /admin/news
 ```
+
+
+## v13.3 — Portais Oeste/Regionais
+
+Adicionados ao Radar:
+
+- Oeste Mais — `oestemais.com`
+- Click Xaxim — `clickxaxim.com.br`
+- Nova FM 103 — `novafm103.com.br`
+- DI Regional — `diregional.com.br`
+- ClicRDC — `clicrdc.com.br`
+- Agência ICEM — `agenciaicem.com.br`
+
+Rode `supabase/v13_3_portais_oeste_regionais.sql` no Supabase depois do deploy.

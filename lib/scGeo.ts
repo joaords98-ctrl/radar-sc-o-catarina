@@ -90,10 +90,14 @@ const SC_SOURCE_MARKERS = [
   'g1 santa catarina', 'diarinho', 'imagem da ilha', 'santa catarina em pauta',
   'gazeta sbs', 'rcn online', 'correio sc', 'sc portais', 'tudo aqui sc',
   'blog do prisco', 'donna da noticia', 'donna da notícia', 'donnadanoticia',
+  'oeste mais', 'oestemais', 'click xaxim', 'clickxaxim', 'nova fm 103',
+  'di regional', 'diregional', 'agencia icem', 'agência icem', 'agenciaicem',
   'nsctotal.com.br', 'diarinho.net', 'imagemdailha.com.br',
   'scc10.com.br', 'santacatarinaempauta.com.br', 'rcnonline.com.br',
   'correiosc.com.br', 'gazetasbs.com.br', 'scportais.com.br',
   'tudoaquisc.com.br', 'blogdoprisco.com.br', 'donnadanoticia.com.br',
+  'oestemais.com', 'clickxaxim.com.br', 'novafm103.com.br',
+  'diregional.com.br', 'agenciaicem.com.br',
 ];
 
 const SC_MARKERS = [
