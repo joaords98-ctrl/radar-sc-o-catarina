@@ -83,10 +83,17 @@ const SC_CITIES: Array<{ name: string; region: string; aliases?: string[] }> = [
 ];
 
 const SC_SOURCE_MARKERS = [
-  'nsctotal', 'ndmais', 'scc10', 'clicrdc', 'jornal razao', 'jornal razão', 'omunicipio',
+  'nsctotal', 'nsc total', 'ndmais', 'scc10', 'clicrdc', 'jornal razao', 'jornal razão', 'omunicipio',
   'o municipio', 'misturebas', 'tn sul', 'sul in foco', 'visor noticias', 'visor notícias',
   'obvsc', 'folha de sc', 'portal via certa', 'portal litoral sul', 'portal meneghetti',
   'portal agora noticias', 'portal agora notícias', 'jornal metas', 'canal ideal', 'g1 sc',
+  'g1 santa catarina', 'diarinho', 'imagem da ilha', 'santa catarina em pauta',
+  'gazeta sbs', 'rcn online', 'correio sc', 'sc portais', 'tudo aqui sc',
+  'blog do prisco', 'donna da noticia', 'donna da notícia', 'donnadanoticia',
+  'nsctotal.com.br', 'diarinho.net', 'imagemdailha.com.br',
+  'scc10.com.br', 'santacatarinaempauta.com.br', 'rcnonline.com.br',
+  'correiosc.com.br', 'gazetasbs.com.br', 'scportais.com.br',
+  'tudoaquisc.com.br', 'blogdoprisco.com.br', 'donnadanoticia.com.br',
 ];
 
 const SC_MARKERS = [
