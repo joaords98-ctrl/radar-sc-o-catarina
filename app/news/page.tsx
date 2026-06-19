@@ -65,10 +65,10 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
       <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Central v10</p>
-          <h2 className="text-2xl font-black sm:text-3xl">Notícias do dia com ordenação</h2>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Admin · base bruta</p>
+          <h2 className="text-2xl font-black sm:text-3xl">Base bruta de notícias capturadas</h2>
           <p className="mt-2 text-sm text-zinc-600">
-            Últimas {hours}h{location ? ` filtradas por ${location}` : ''}. Ordem atual: {sortLabels[sort]}.
+            Tela técnica com links capturados. Para trabalho diário, prefira Clipping e Produção. Últimas {hours}h{location ? ` filtradas por ${location}` : ''}. Ordem atual: {sortLabels[sort]}.
           </p>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 text-sm font-bold sm:flex-wrap sm:overflow-visible sm:pb-0">

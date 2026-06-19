@@ -76,9 +76,9 @@ export default async function Home() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">Mesa de operação</p>
-            <h2 className="mt-3 max-w-4xl text-3xl font-black leading-tight text-zinc-950 sm:text-5xl">Clipping primeiro. Pauta depois.</h2>
+            <h2 className="mt-3 max-w-4xl text-3xl font-black leading-tight text-zinc-950 sm:text-5xl">Clipping primeiro. Produção depois.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-600 sm:text-base">
-              Use o Radar em ordem simples: veja o clipping do dia, encontre o que O Catarina ainda não publicou, gere base para site/Instagram e acompanhe a concorrência.
+              Use o Radar em ordem simples: veja o clipping, clique em “Enviar para pauta”, produza o texto, publique e acompanhe a concorrência.
             </p>
           </div>
           <div className="rounded-2xl bg-zinc-100 p-4 text-sm text-zinc-700 lg:w-80">
@@ -94,8 +94,8 @@ export default async function Home() {
       <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <ActionCard label="1º passo" title="Abrir clipping" text="Resumo do dia, fontes, cidades quentes e pautas que ainda não viraram publicação." href="/clipping?hours=24&sort=potencial" tone="dark" />
         <ActionCard label="2º passo" title="Buscar notícia específica" text="Digite cidade, rodovia, tema ou frase da notícia para caçar pauta em SC." href="/radar" tone="green" />
-        <ActionCard label="3º passo" title="Instagram agora" text="Veja o que rende Reels, Feed ou Story, com score de potencial para redes." href="/instagram?hours=24&sort=instagram" tone="pink" />
-        <ActionCard label="4º passo" title="Pautas agrupadas" text="Veja eventos únicos, concorrentes, primeiro veículo e ação sugerida." href="/stories?hours=24&sort=potencial" tone="blue" />
+        <ActionCard label="3º passo" title="Fila de produção" text="Veja só as pautas que você separou para publicar, com status e botões de produção." href="/production" tone="blue" />
+        <ActionCard label="4º passo" title="Instagram agora" text="Veja o que rende Reels, Feed ou Story, com score de potencial para redes." href="/instagram?hours=24&sort=instagram" tone="pink" />
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
@@ -113,7 +113,7 @@ export default async function Home() {
           <a className="rounded-xl bg-zinc-950 px-3 py-2 text-sm font-black text-white" href="/clipping?hours=24&mode=pendentes">Não publicadas</a>
           <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/clipping?hours=24&mode=urgentes">Urgentes</a>
           <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/clipping?hours=24&mode=oficiais">Com fonte oficial</a>
-          <a className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href="/news?hours=24&sort=recente">Mais recentes</a>
+          <a className="rounded-xl bg-blue-100 px-3 py-2 text-sm font-bold text-blue-950" href="/production">Fila de produção</a>
           {cityFilters.map((city) => (
             <a key={city} className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-800" href={`/clipping?hours=24&city=${encodeURIComponent(city)}`}>{city}</a>
           ))}
@@ -126,7 +126,7 @@ export default async function Home() {
       <section className="mt-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-black sm:text-2xl">Fila resumida</h2>
-          <p className="text-sm text-zinc-600">As 4 pautas com maior prioridade agora. Para a visão completa, use Clipping.</p>
+          <p className="text-sm text-zinc-600">As 4 pautas com maior prioridade no clipping. Clique em “Enviar para pauta” para colocar na fila de produção.</p>
         </div>
         <a className="rounded-xl bg-zinc-950 px-5 py-3 text-center text-sm font-black text-white" href="/clipping?hours=24&sort=potencial">Ver clipping completo</a>
       </section>

@@ -8,6 +8,7 @@ import { CopyTextButton } from '@/components/CopyTextButton';
 import { formatBrazilDateTime } from '@/lib/date';
 import { buildClippingReport, clippingActionFor, clippingActionLabel, hasOfficialSource } from '@/lib/clipping';
 import { instagramPotentialForGroup, suggestedInstagramFormatForGroup } from '@/lib/instagram';
+import { SendToProductionButton } from '@/components/SendToProductionButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,6 +123,11 @@ function ClippingStoryCard({ group, index }: { group: StoryGroup; index: number 
 
       <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <a className="rounded-xl bg-zinc-950 px-4 py-2 text-center text-sm font-bold text-white" href={group.leadItem.link} target="_blank" rel="noreferrer">Abrir principal</a>
+        {group.leadItem.status === 'em_producao' || group.leadItem.status === 'publicado' ? (
+          <a className="rounded-xl bg-blue-100 px-4 py-2 text-center text-sm font-bold text-blue-950" href="/production">Na produção</a>
+        ) : (
+          <SendToProductionButton newsId={group.leadItem.id} storyKey={group.id} headline={group.headline} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-sm font-black text-white">Enviar para pauta</SendToProductionButton>
+        )}
         <a className="rounded-xl bg-emerald-100 px-4 py-2 text-center text-sm font-bold text-emerald-900" href={`/draft?newsId=${group.leadItem.id}`}>Gerar base</a>
         <a className="rounded-xl bg-zinc-200 px-4 py-2 text-center text-sm font-bold text-zinc-800" href={`/stories?focus=${encodeURIComponent(group.id)}`}>Ver grupo</a>
         <a className="rounded-xl bg-pink-100 px-4 py-2 text-center text-sm font-bold text-pink-900" href={`/instagram?sort=instagram&city=${encodeURIComponent(group.city ?? '')}`}>Instagram</a>
@@ -165,10 +171,10 @@ export default async function ClippingPage({ searchParams }: { searchParams: Pro
   return (
     <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
       <section className="rounded-2xl bg-zinc-950 p-5 text-white shadow-sm sm:rounded-3xl sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Radar SC v11</p>
-        <h2 className="mt-3 text-2xl font-black leading-tight sm:text-4xl">Clipping inteligente do dia.</h2>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Radar SC v13</p>
+        <h2 className="mt-3 text-2xl font-black leading-tight sm:text-4xl">Clipping executivo do dia.</h2>
         <p className="mt-4 max-w-4xl text-sm leading-6 text-zinc-300 sm:text-base">
-          Veja o que saiu, onde saiu, quem publicou primeiro, quais pautas estão quentes e o que o O Catarina ainda não publicou.
+          Veja o que saiu, escolha o que importa e mande para Produção com o botão “Enviar para pauta”.
         </p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <CopyTextButton text={report.summaryText} label="Copiar resumo do clipping" className="rounded-xl bg-white px-4 py-3 text-sm font-black text-zinc-950 transition hover:bg-zinc-200" />

@@ -2,6 +2,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { StoryGroup } from '@/lib/storyGroups';
 import { instagramPotentialForGroup, suggestedInstagramFormatForGroup } from '@/lib/instagram';
+import { SendToProductionButton } from '@/components/SendToProductionButton';
 
 const formatLabels: Record<StoryGroup['suggestedFormat'], string> = {
   site: 'Matéria site',
@@ -69,6 +70,11 @@ export function StoryClusterCard({ group }: { group: StoryGroup }) {
         <a className="rounded-xl bg-zinc-950 px-4 py-2 text-center text-sm font-bold text-white" href={group.leadItem.link} target="_blank" rel="noreferrer">Abrir principal</a>
         <a className="rounded-xl bg-zinc-200 px-4 py-2 text-center text-sm font-bold text-zinc-800" href={`/stories?focus=${encodeURIComponent(group.id)}`}>Ver grupo</a>
         <a className="rounded-xl bg-emerald-100 px-4 py-2 text-center text-sm font-bold text-emerald-900" href={`/draft?newsId=${group.leadItem.id}`}>Gerar base</a>
+        {group.leadItem.status === 'em_producao' || group.leadItem.status === 'publicado' ? (
+          <a className="rounded-xl bg-blue-100 px-4 py-2 text-center text-sm font-bold text-blue-950" href="/production">Na produção</a>
+        ) : (
+          <SendToProductionButton newsId={group.leadItem.id} storyKey={group.id} headline={group.headline} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-sm font-black text-white">Enviar para pauta</SendToProductionButton>
+        )}
         <a className="rounded-xl bg-pink-100 px-4 py-2 text-center text-sm font-bold text-pink-900" href={`/instagram?sort=instagram&city=${encodeURIComponent(group.city ?? '')}`}>Instagram</a>
       </div>
     </article>

@@ -2,6 +2,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { NewsItem } from '@/lib/types';
 import { buildInstagramDraftForItem, instagramActionForItem, instagramPotentialForItem } from '@/lib/instagram';
+import { SendToProductionButton } from '@/components/SendToProductionButton';
 
 const formatLabels = {
   reels: 'Reels',
@@ -46,6 +47,11 @@ export function InstagramOpportunityCard({ item }: { item: NewsItem }) {
       <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <a className="rounded-xl bg-zinc-950 px-4 py-2 text-center text-sm font-bold text-white" href={`/draft?newsId=${item.id}`}>Gerar base</a>
         <a className="rounded-xl bg-pink-100 px-4 py-2 text-center text-sm font-bold text-pink-900" href={item.link} target="_blank" rel="noreferrer">Abrir fonte</a>
+        {item.status === 'em_producao' || item.status === 'publicado' ? (
+          <a className="rounded-xl bg-blue-100 px-4 py-2 text-center text-sm font-bold text-blue-950" href="/production">Na produção</a>
+        ) : (
+          <SendToProductionButton newsId={item.id} storyKey={item.story_key ?? null} headline={item.title} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-sm font-black text-white">Enviar para pauta</SendToProductionButton>
+        )}
       </div>
     </article>
   );

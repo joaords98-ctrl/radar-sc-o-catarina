@@ -4,6 +4,7 @@ import { StatusBadge } from './StatusBadge';
 import { StatusButton } from './StatusButton';
 import type { NewsItem } from '@/lib/types';
 import { instagramPotentialForItem, suggestedInstagramFormatForItem } from '@/lib/instagram';
+import { SendToProductionButton } from '@/components/SendToProductionButton';
 
 export function NewsCard({ item }: { item: NewsItem }) {
   const time = item.published_at
@@ -78,6 +79,11 @@ export function NewsCard({ item }: { item: NewsItem }) {
         <a className="rounded-xl bg-pink-100 px-4 py-2 text-center text-sm font-bold text-pink-900" href={`/draft?newsId=${item.id}`}>
           Gerar base
         </a>
+        {item.status === 'em_producao' || item.status === 'publicado' ? (
+          <a className="rounded-xl bg-blue-100 px-4 py-2 text-center text-sm font-bold text-blue-950" href="/production">Na produção</a>
+        ) : (
+          <SendToProductionButton newsId={item.id} storyKey={item.story_key ?? null} headline={item.title} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-sm font-black text-white">Enviar para pauta</SendToProductionButton>
+        )}
         <StatusButton id={item.id} status="publicado" className="rounded-xl bg-emerald-100 px-4 py-2 text-center text-sm font-bold text-emerald-900">
           Publicado
         </StatusButton>

@@ -1,32 +1,40 @@
-# Radar SC — O Catarina v12
+# Radar SC — O Catarina v13
 
-Versão simplificada para operação diária: Clipping primeiro, Busca ativa, Instagram e Pautas.
+Versão de redação enxuta: Clipping encontra, Produção separa o que será publicado, Instagram organiza redes e Concorrência acompanha disputa.
 
-## Rotas principais
+## Lógica das telas
 
 - `/` — início simplificado
-- `/clipping` — clipping do dia
-- `/radar` — busca ativa por cidade/tema/rodovia
-- `/instagram` — fila Instagram
-- `/stories` — pautas agrupadas
-- `/news` — notícias brutas
-- `/competitors` — concorrência
+- `/clipping` — resumo executivo do dia e botão **Enviar para pauta**
+- `/radar` — busca ativa por cidade, tema, rodovia ou frase específica
+- `/production` — fila das pautas escolhidas para publicar
+- `/instagram` — oportunidades para Reels, Feed e Stories
+- `/stories` — agrupamento técnico por pauta/evento
+- `/competitors` — análise de concorrentes
+- `/admin/news` — base bruta de notícias capturadas
 
-## Atualização
+## Atualização no Supabase
 
-Suba o conteúdo desta pasta para a raiz do GitHub e faça um commit novo.
+Se já rodou os SQLs anteriores, rode apenas:
 
-A raiz precisa ficar assim:
-
-```
-app/
-components/
-lib/
-supabase/
-package.json
-vercel.json
-README.md
+```txt
+supabase/v13_redacao_enxuta.sql
 ```
 
-Se `Clipping` não aparecer no menu depois do deploy, a Vercel ainda está usando commit antigo ou os arquivos foram enviados para uma pasta interna errada.
-Force deploy final v12
+Em instalação limpa, rode:
+
+```txt
+supabase/RUN_THIS_ALL.sql
+```
+
+## Fluxo recomendado
+
+1. Abra o **Clipping**.
+2. Clique em **Enviar para pauta** nas notícias que quer publicar.
+3. Vá em **Produção**.
+4. Gere base, marque como em produção, publicada, reapurar ou descartar.
+5. Use **Instagram** para adaptar as pautas para redes.
+
+## Importante para deploy
+
+Não suba `package-lock.json` gerado fora do GitHub/Vercel. Se ele apontar para registry interno, a Vercel pode falhar no `npm install`.

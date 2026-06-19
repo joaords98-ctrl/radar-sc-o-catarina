@@ -593,3 +593,16 @@ update news_items
 set clipping_priority = 'alta'
 where clipping_priority = 'normal'
   and coalesce(opportunity_score, 0) >= 80;
+
+-- v13 — Redação Enxuta / Enviar para pauta
+alter table if exists editorial_tasks
+  add column if not exists notes text;
+
+alter table if exists editorial_tasks
+  add column if not exists priority integer not null default 0;
+
+create index if not exists idx_editorial_tasks_type_status_created
+  on editorial_tasks(task_type, status, created_at desc);
+
+create index if not exists idx_editorial_tasks_news_status
+  on editorial_tasks(news_item_id, status);

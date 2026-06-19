@@ -39,7 +39,7 @@ export default async function DraftPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
       <section className="rounded-2xl bg-zinc-950 p-5 text-white shadow-sm sm:rounded-3xl sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Base editorial v10</p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Base editorial v13</p>
         <h2 className="mt-3 text-2xl font-black leading-tight sm:text-4xl">Texto-base para site e Instagram.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">Use como rascunho, não como cópia automática. Antes de publicar, confirme fonte oficial e ajuste o ângulo do O Catarina.</p>
       </section>

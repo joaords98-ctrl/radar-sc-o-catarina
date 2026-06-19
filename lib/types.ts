@@ -37,3 +37,18 @@ export type RssQuery = {
   priority_weight: number;
   enabled: boolean;
 };
+
+export type EditorialTaskStatus = 'pendente' | 'fazendo' | 'feito' | 'cancelado';
+
+export type EditorialTask = {
+  id: string;
+  news_item_id: string | null;
+  task_type: string;
+  status: EditorialTaskStatus;
+  assigned_to: string | null;
+  due_at: string | null;
+  notes?: string | null;
+  priority?: number | null;
+  created_at: string;
+  news_items?: NewsItem | null;
+};

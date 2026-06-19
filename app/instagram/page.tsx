@@ -80,7 +80,7 @@ export default async function InstagramPage({ searchParams }: { searchParams: Pr
   return (
     <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
       <section className="rounded-2xl bg-zinc-950 p-5 text-white shadow-sm sm:rounded-3xl sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-pink-300 sm:text-sm sm:tracking-[0.25em]">Radar SC v10 · Instagram Intelligence</p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-pink-300 sm:text-sm sm:tracking-[0.25em]">Radar SC v13 · Instagram</p>
         <h2 className="mt-3 max-w-4xl text-2xl font-black leading-tight sm:text-4xl">O que postar agora no Instagram do O Catarina.</h2>
         <p className="mt-4 max-w-4xl text-sm leading-6 text-zinc-300 sm:text-base">
           A fila calcula potencial de Reels, Feed, Stories e Carrossel a partir de recência, vídeo/imagem, cidade, repercussão, concorrência e risco editorial. Não mede likes reais dos concorrentes; isso vem depois com importação do Meta.

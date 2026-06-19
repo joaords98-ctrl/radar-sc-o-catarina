@@ -80,6 +80,8 @@ create table if not exists editorial_tasks (
   status text not null default 'pendente' check (status in ('pendente','fazendo','feito','cancelado')),
   assigned_to text,
   due_at timestamptz,
+  notes text,
+  priority integer not null default 0,
   created_at timestamptz not null default now()
 );
 
