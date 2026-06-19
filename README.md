@@ -38,3 +38,17 @@ supabase/RUN_THIS_ALL.sql
 ## Importante para deploy
 
 Não suba `package-lock.json` gerado fora do GitHub/Vercel. Se ele apontar para registry interno, a Vercel pode falhar no `npm install`.
+
+## v13.1 — Fonte adicionada
+
+Fonte regional adicionada ao Radar:
+
+- Donna da Notícia — donnadanoticia.com.br
+
+Rode no Supabase:
+
+```txt
+supabase/v13_1_donna_da_noticia.sql
+```
+
+Depois execute uma nova coleta pelo botão **Atualizar agora**.
