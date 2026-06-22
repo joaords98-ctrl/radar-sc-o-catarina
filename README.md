@@ -1,4 +1,4 @@
-# Radar SC — O Catarina v13.6
+# Radar SC — O Catarina v13.7
 
 Versão de redação enxuta com **Clipping**, **Busca**, **Produção**, **Instagram** e **Concorrência**.
 
@@ -101,7 +101,7 @@ O Radar não faz scraping de Instagram/Facebook. A tela cria links de busca púb
 SQL novo: `supabase/v13_5_social_watch.sql`.
 
 
-## v13.6 — Hotfix coleta rápida
+## v13.7 — Hotfix coleta rápida
 
 Correção para o botão Atualizar agora ficar preso em “Coletando...” quando havia fontes demais cadastradas.
 
@@ -113,3 +113,20 @@ Mudanças:
 - coleta para antes de estourar o limite da Vercel;
 - cron diário usa modo `scheduled`;
 - não inclui `package-lock.json`.
+
+
+## Rotina automática de coleta pesada
+
+A v13.7 agenda a coleta pesada automaticamente em horário de Brasília:
+
+- 08h30 — primeira varredura editorial do dia
+- 11h00 — atualização de meio do dia
+- 16h00 — fechamento da tarde
+
+No `vercel.json`, os horários ficam em UTC:
+
+- `30 11 * * *` = 08h30 Brasília
+- `0 14 * * *` = 11h00 Brasília
+- `0 19 * * *` = 16h00 Brasília
+
+O botão manual continua em modo rápido para não travar a tela.
