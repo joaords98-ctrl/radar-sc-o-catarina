@@ -4,6 +4,17 @@ import { useState } from 'react';
 
 type Variant = 'inline' | 'header';
 
+type CollectResponse = {
+  ok?: boolean;
+  error?: string;
+  inserted?: number;
+  updated?: number;
+  skippedOld?: number;
+  processedQueries?: number;
+  queryLimit?: number;
+  stoppedByDeadline?: boolean;
+};
+
 export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -14,23 +25,42 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
     setMessage(null);
     setError(null);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55_000);
+
     try {
-      const res = await fetch('/api/panel/collect-news', {
+      const res = await fetch('/api/panel/collect-news?mode=quick', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'Falha ao coletar notícias.');
+      const text = await res.text();
+      let data: CollectResponse = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { error: text || 'Resposta inválida do servidor.' };
       }
 
-      setMessage(`Coleta concluída: ${data.inserted ?? 0} novas, ${data.updated ?? 0} atualizadas, ${data.skippedOld ?? 0} antigas ignoradas.`);
-      setTimeout(() => window.location.reload(), 1400);
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `Falha ao coletar notícias. Status ${res.status}.`);
+      }
+
+      const partial = data.stoppedByDeadline ? ' Coleta parcial para evitar timeout.' : '';
+      setMessage(
+        `Coleta rápida concluída: ${data.inserted ?? 0} novas, ${data.updated ?? 0} atualizadas, ${data.skippedOld ?? 0} antigas ignoradas. ${data.processedQueries ?? 0}/${data.queryLimit ?? 0} buscas processadas.${partial}`,
+      );
+      setTimeout(() => window.location.reload(), 1600);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido.');
+      const message = err instanceof Error && err.name === 'AbortError'
+        ? 'A coleta demorou demais e foi interrompida. Tente novamente em alguns minutos ou reduza as fontes ativas.'
+        : err instanceof Error
+          ? err.message
+          : 'Erro desconhecido.';
+      setError(message);
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   }
@@ -48,12 +78,12 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
           {loading ? 'Coletando...' : 'Atualizar'}
         </button>
         {message ? (
-          <div className="fixed left-4 right-4 top-[86px] z-50 rounded-xl border border-emerald-200 bg-white p-3 text-xs font-semibold text-emerald-800 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80">
+          <div className="fixed left-4 right-4 top-[86px] z-50 rounded-xl border border-emerald-200 bg-white p-3 text-xs font-semibold text-emerald-800 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-96">
             {message}
           </div>
         ) : null}
         {error ? (
-          <div className="fixed left-4 right-4 top-[86px] z-50 rounded-xl border border-red-200 bg-white p-3 text-xs font-semibold text-red-800 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80">
+          <div className="fixed left-4 right-4 top-[86px] z-50 rounded-xl border border-red-200 bg-white p-3 text-xs font-semibold text-red-800 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-96">
             {error}
           </div>
         ) : null}
@@ -71,8 +101,8 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
       >
         {loading ? 'Coletando...' : 'Atualizar agora manualmente'}
       </button>
-      {message ? <p className="text-left text-xs font-semibold text-emerald-700 sm:max-w-xs sm:text-right">{message}</p> : null}
-      {error ? <p className="text-left text-xs font-semibold text-red-700 sm:max-w-xs sm:text-right">{error}</p> : null}
+      {message ? <p className="text-left text-xs font-semibold text-emerald-700 sm:max-w-md sm:text-right">{message}</p> : null}
+      {error ? <p className="text-left text-xs font-semibold text-red-700 sm:max-w-md sm:text-right">{error}</p> : null}
     </div>
   );
 }

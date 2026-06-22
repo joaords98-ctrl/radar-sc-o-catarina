@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app/api/panel/collect-news/route.ts": { "maxDuration": 60 },
+    "app/api/cron/collect-news/route.ts": { "maxDuration": 60 },
+    "app/api/panel/active-search/route.ts": { "maxDuration": 60 }
+  },
   "crons": [
     {
       "path": "/api/cron/collect-news",

@@ -1,4 +1,4 @@
-# Radar SC — O Catarina v13.5
+# Radar SC — O Catarina v13.6
 
 Versão de redação enxuta com **Clipping**, **Busca**, **Produção**, **Instagram** e **Concorrência**.
 
@@ -99,3 +99,17 @@ Adiciona `/social` para organizar perfis de Instagram, páginas e grupos de Face
 O Radar não faz scraping de Instagram/Facebook. A tela cria links de busca pública/indexada para checar sinais de notícia, vídeos, trânsito e denúncias.
 
 SQL novo: `supabase/v13_5_social_watch.sql`.
+
+
+## v13.6 — Hotfix coleta rápida
+
+Correção para o botão Atualizar agora ficar preso em “Coletando...” quando havia fontes demais cadastradas.
+
+Mudanças:
+
+- botão manual usa coleta rápida (`mode=quick`);
+- rota de coleta tem limite de duração configurado para Vercel;
+- cada feed RSS tem timeout próprio;
+- coleta para antes de estourar o limite da Vercel;
+- cron diário usa modo `scheduled`;
+- não inclui `package-lock.json`.

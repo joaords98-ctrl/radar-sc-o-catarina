@@ -3,6 +3,7 @@ import { collectNews } from '@/lib/collectNews';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 function isAuthorized(req: NextRequest) {
   const cronHeader = req.headers.get('x-vercel-cron');
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await collectNews();
+    const result = await collectNews({ mode: 'scheduled' });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';

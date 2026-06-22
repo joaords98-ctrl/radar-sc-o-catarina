@@ -7,9 +7,80 @@ import { buildStoryKey, refreshRepercussionMetrics, sourceDomainFromUrl } from '
 import { getRecentCutoffIso, getRecentHours, isRecentPublishedAt } from './recent';
 import type { RssQuery } from './types';
 
+type CollectMode = 'quick' | 'scheduled' | 'full';
+
+type CollectOptions = {
+  mode?: CollectMode;
+};
+
 const parser = new Parser();
 
-export async function collectNews() {
+const MODE_SETTINGS: Record<CollectMode, {
+  queryLimit: number;
+  itemLimit: number;
+  feedTimeoutMs: number;
+  deadlineMs: number;
+  refreshRepercussion: boolean;
+}> = {
+  // Botão do painel: precisa terminar rápido para não travar a interface.
+  quick: {
+    queryLimit: 24,
+    itemLimit: 6,
+    feedTimeoutMs: 3500,
+    deadlineMs: 35_000,
+    refreshRepercussion: false,
+  },
+  // Cron diário: pode procurar um pouco mais, mas ainda respeita limite da Vercel Hobby.
+  scheduled: {
+    queryLimit: 70,
+    itemLimit: 8,
+    feedTimeoutMs: 4500,
+    deadlineMs: 52_000,
+    refreshRepercussion: true,
+  },
+  // Uso manual avançado, se chamado com ?mode=full.
+  full: {
+    queryLimit: 110,
+    itemLimit: 10,
+    feedTimeoutMs: 5000,
+    deadlineMs: 55_000,
+    refreshRepercussion: true,
+  },
+};
+
+async function parseFeedWithTimeout(url: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Radar SC O Catarina/1.0',
+        Accept: 'application/rss+xml, application/xml, text/xml, */*',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`RSS retornou HTTP ${res.status}`);
+    }
+
+    const xml = await res.text();
+    return parser.parseString(xml);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function isDeadlineReached(deadlineAt: number) {
+  return Date.now() >= deadlineAt;
+}
+
+export async function collectNews(options: CollectOptions = {}) {
+  const mode = options.mode ?? 'quick';
+  const settings = MODE_SETTINGS[mode] ?? MODE_SETTINGS.quick;
+  const deadlineAt = Date.now() + settings.deadlineMs;
+
   const supabase = getSupabaseAdmin();
   const recentHours = getRecentHours();
   const cutoffIso = getRecentCutoffIso(recentHours);
@@ -19,7 +90,7 @@ export async function collectNews() {
     .select('*')
     .eq('enabled', true)
     .order('priority_weight', { ascending: false })
-    .limit(190);
+    .limit(settings.queryLimit);
 
   if (error) throw error;
 
@@ -30,14 +101,28 @@ export async function collectNews() {
   let skippedWithoutDate = 0;
   let skippedOutOfState = 0;
   let skippedNoScContext = 0;
+  let processedQueries = 0;
+  let stoppedByDeadline = false;
   const errors: string[] = [];
 
   for (const query of (queries ?? []) as RssQuery[]) {
+    if (isDeadlineReached(deadlineAt)) {
+      stoppedByDeadline = true;
+      break;
+    }
+
+    processedQueries += 1;
+
     try {
-      const feed = await parser.parseURL(buildGoogleNewsRssUrl(query.query));
-      const items = feed.items.slice(0, 30);
+      const feed = await parseFeedWithTimeout(buildGoogleNewsRssUrl(query.query), settings.feedTimeoutMs);
+      const items = feed.items.slice(0, settings.itemLimit);
 
       for (const item of items) {
+        if (isDeadlineReached(deadlineAt)) {
+          stoppedByDeadline = true;
+          break;
+        }
+
         if (!item.link || !item.title) {
           skipped += 1;
           continue;
@@ -127,11 +212,18 @@ export async function collectNews() {
     }
   }
 
-  // Métrica de repercussão apenas para pautas recentes. Mantém histórico no banco, mas o painel prioriza o dia.
-  const repercussion = await refreshRepercussionMetrics(supabase, { sinceIso: cutoffIso });
+  let repercussion = { storyGroups: 0, repercussionRowsUpdated: 0 };
+  if (settings.refreshRepercussion && !stoppedByDeadline && Date.now() < deadlineAt - 8000) {
+    try {
+      repercussion = await refreshRepercussionMetrics(supabase, { sinceIso: cutoffIso });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push(`Repercussão: ${message}`);
+    }
+  }
 
   await supabase.from('cron_runs').insert({
-    job_name: 'collect-news',
+    job_name: `collect-news-${mode}`,
     inserted_count: inserted,
     skipped_count: skipped,
     error_count: errors.length,
@@ -139,6 +231,7 @@ export async function collectNews() {
   });
 
   return {
+    mode,
     inserted,
     updated,
     skipped,
@@ -146,6 +239,9 @@ export async function collectNews() {
     skippedWithoutDate,
     skippedOutOfState,
     skippedNoScContext,
+    processedQueries,
+    queryLimit: settings.queryLimit,
+    stoppedByDeadline,
     recentHours,
     cutoffIso,
     errors,
