@@ -137,3 +137,9 @@ O botão manual continua em modo rápido para não travar a tela.
 - Botão **Coleta rápida** para uso normal.
 - Botão **Coleta pesada** para buscar mais fontes manualmente, usando `mode=full`.
 - A coleta pesada pode retornar parcial para evitar timeout na Vercel.
+
+## v13.9 — Base editorial melhorada
+
+- O botão `Gerar base` agora usa o título real da notícia, resumo coletado, fonte, cidade/região, data e ângulo.
+- A matéria-base deixou de ser genérica e passou a destacar o fato central da pauta.
+- Instagram e roteiro curto também usam a notícia selecionada como gancho principal.
