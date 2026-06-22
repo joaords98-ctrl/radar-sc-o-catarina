@@ -19,7 +19,7 @@ export async function collectNews() {
     .select('*')
     .eq('enabled', true)
     .order('priority_weight', { ascending: false })
-    .limit(80);
+    .limit(190);
 
   if (error) throw error;
 
@@ -35,7 +35,7 @@ export async function collectNews() {
   for (const query of (queries ?? []) as RssQuery[]) {
     try {
       const feed = await parser.parseURL(buildGoogleNewsRssUrl(query.query));
-      const items = feed.items.slice(0, 25);
+      const items = feed.items.slice(0, 30);
 
       for (const item of items) {
         if (!item.link || !item.title) {

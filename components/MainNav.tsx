@@ -8,6 +8,7 @@ const links = [
   { href: '/radar', label: 'Busca', short: 'Busca' },
   { href: '/production', label: 'Produção', short: 'Pautas', highlight: true },
   { href: '/instagram', label: 'Instagram', short: 'Insta' },
+  { href: '/social', label: 'Fontes sociais', short: 'Social' },
   { href: '/competitors', label: 'Concorrência', short: 'Concorr.' },
 ];
 
