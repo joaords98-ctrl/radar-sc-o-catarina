@@ -19,6 +19,9 @@ type ActiveSearchItem = {
 
 type Result = {
   ok: boolean;
+  safeMode?: boolean;
+  timedOutSafely?: boolean;
+  warning?: string;
   stoppedEarly?: boolean;
   error?: string;
   finalQuery?: string;
@@ -93,7 +96,7 @@ export function ActiveSearchClient({
       const res = await fetch('/api/panel/active-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q, city, region, topic, hours: Number(hours), limit: 12 }),
+        body: JSON.stringify({ q, city, region, topic, hours: Number(hours), limit: 20 }),
       });
 
       const text = await res.text();
@@ -105,7 +108,7 @@ export function ActiveSearchClient({
         data = {
           ok: false,
           error: text?.includes('An error occurred') || text?.includes('FUNCTION_INVOCATION_TIMEOUT')
-            ? 'A busca demorou mais que o limite da Vercel. Tente uma busca mais específica ou use a coleta pesada por região.'
+            ? 'A busca demorou mais que o limite da Vercel. A página foi protegida contra quebra de JSON. Use uma busca mais específica ou rode a coleta pesada.'
             : `Resposta inesperada do servidor: ${text.slice(0, 160) || 'vazia'}`,
         };
       }
@@ -200,17 +203,18 @@ export function ActiveSearchClient({
               <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Resultado da busca ativa</p>
-                  <h3 className="mt-1 text-xl font-black sm:text-2xl">{result.items?.length ?? 0} notícias salvas no Radar</h3>
+                  <h3 className="mt-1 text-xl font-black sm:text-2xl">{result.items?.length ?? 0} notícias encontradas no Radar</h3>
                   <p className="mt-2 text-sm text-zinc-600">
-                    {result.inserted ?? 0} novas · {result.updated ?? 0} atualizadas · {result.skippedOutOfState ?? 0} fora de SC bloqueadas.
+                    {result.safeMode ? 'Busca segura na base já coletada' : `${result.inserted ?? 0} novas · ${result.updated ?? 0} atualizadas`} · {result.skippedOutOfState ?? 0} fora de SC bloqueadas.
                   </p>
                   {result.finalQuery ? <p className="mt-2 text-xs text-zinc-500">Consulta usada: {result.finalQuery}</p> : null}
-                  {result.stoppedEarly ? <p className="mt-2 text-xs font-bold text-amber-700">Busca interrompida antes do limite da Vercel. Os resultados parciais foram salvos.</p> : null}
+                  {result.warning ? <p className="mt-2 text-xs font-bold text-amber-700">{result.warning}</p> : null}
+                  {result.stoppedEarly ? <p className="mt-2 text-xs font-bold text-amber-700">Busca interrompida antes do limite da Vercel. Os resultados parciais foram exibidos.</p> : null}
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                   {result.finalQuery ? <button onClick={() => copyText('consulta', result.finalQuery || '')} className="w-full rounded-xl bg-zinc-100 px-4 py-2 text-center text-sm font-bold text-zinc-800 sm:w-auto">Copiar consulta</button> : null}
                   {resultText ? <button onClick={() => copyText('resultados', resultText)} className="w-full rounded-xl bg-emerald-100 px-4 py-2 text-center text-sm font-bold text-emerald-900 sm:w-auto">Copiar resultados</button> : null}
-                  <a href="/stories" className="w-full rounded-xl bg-zinc-950 px-4 py-2 text-center text-sm font-bold text-white sm:w-auto">Ver pautas</a>
+                  <a href="/production" className="w-full rounded-xl bg-zinc-950 px-4 py-2 text-center text-sm font-bold text-white sm:w-auto">Ver produção</a>
                 </div>
               </div>
               {copied ? <p className="mt-3 text-sm font-bold text-emerald-700">Copiado: {copied}</p> : null}

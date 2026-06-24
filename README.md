@@ -1,4 +1,4 @@
-# Radar SC — O Catarina v13.8
+# Radar SC — O Catarina v13.12.8
 
 Versão de redação enxuta com **Clipping**, **Busca**, **Produção**, **Instagram** e **Concorrência**.
 
@@ -156,3 +156,8 @@ Inclui radar de escândalos/denúncias com buscas focadas em TCE-SC, MPSC, Gaeco
 - Reduz a busca ativa para retorno rápido.
 - Remove repercussão pesada da busca ativa manual.
 - Mantém coleta pesada no botão/cron próprios.
+
+
+## v13.12
+
+Hotfix definitivo da Busca ativa/Escândalos: o endpoint `/api/panel/active-search` passou a usar busca segura na base já coletada, retornando JSON sempre e evitando timeout 504 da Vercel. Para buscar notícias novas, use Coleta rápida/pesada ou aguarde os crons.

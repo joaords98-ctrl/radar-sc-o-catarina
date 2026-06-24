@@ -24,7 +24,7 @@ export default function EscandalosPage() {
           Busque denúncias, investigações, contratos suspeitos e casos de dinheiro público em Santa Catarina.
         </h2>
         <p className="mt-4 max-w-4xl text-sm leading-6 text-red-100 sm:text-base">
-          Esta área prioriza sinais de pauta sensíveis: TCE-SC, MPSC, Gaeco, prefeitura, câmara, licitação, contrato, obra, saúde, educação, improbidade e suspeita de irregularidade. Use como ponto de partida e sempre reapore antes de publicar.
+          Esta área prioriza sinais de pauta sensíveis: TCE-SC, MPSC, Gaeco, prefeitura, câmara, licitação, contrato, obra, saúde, educação, improbidade e suspeita de irregularidade. Use como ponto de partida e sempre reapure antes de publicar.
         </p>
         <div className="mt-5 rounded-2xl bg-white/10 p-4 text-sm font-semibold leading-6 text-red-50 ring-1 ring-white/15">
           Regra editorial: trate tudo como <strong>suspeita, denúncia ou investigação</strong> até haver confirmação oficial/documental. Evite cravar culpa antes de checar fonte primária, defesa dos citados e andamento do caso.

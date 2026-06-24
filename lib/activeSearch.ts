@@ -242,3 +242,94 @@ export async function runActiveSearch(input: {
     items: savedItems,
   };
 }
+
+
+export async function runActiveSearchSafe(input: {
+  q: string;
+  city?: string | null;
+  region?: string | null;
+  topic?: string | null;
+  hours?: number;
+  limit?: number;
+}) {
+  const supabase = getSupabaseAdmin();
+  const hours = Math.max(1, Math.min(Number(input.hours || 72), 168));
+  const limit = Math.max(5, Math.min(Number(input.limit || 20), 30));
+  const finalQuery = buildActiveSearchQuery(input);
+
+  if (!input.q?.trim() && !input.city && !input.region && !input.topic) {
+    throw new Error('Informe uma cidade, região, tema ou termo de busca.');
+  }
+
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('id,title,link,source_name,source_domain,published_at,city,region,topic,opportunity_score,summary')
+    .gte('published_at', since)
+    .order('published_at', { ascending: false })
+    .limit(300);
+
+  if (error) throw error;
+
+  const rawQ = normalize(input.q || '');
+  const words = rawQ
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 3)
+    .slice(0, 8);
+
+  const scandalTerms = [
+    'denuncia', 'denúncia', 'investigacao', 'investigação', 'corrupcao', 'corrupção',
+    'fraude', 'licitacao', 'licitação', 'contrato', 'superfaturamento', 'improbidade',
+    'gaeco', 'mpsc', 'tce', 'prefeitura', 'camara', 'câmara', 'vereador', 'operacao', 'operação',
+  ];
+
+  const topicNorm = normalize(input.topic || '');
+  const cityNorm = normalize(input.city || '');
+  const regionNorm = normalize(input.region || '');
+
+  const filtered = (data || []).filter((item: any) => {
+    const text = normalize([item.title, item.summary, item.source_name, item.city, item.region, item.topic].filter(Boolean).join(' '));
+
+    if (cityNorm && normalize(item.city || '') !== cityNorm && !text.includes(cityNorm)) return false;
+    if (regionNorm && normalize(item.region || '') !== regionNorm && !text.includes(regionNorm)) return false;
+
+    if (topicNorm && !['geral', 'todos'].includes(topicNorm)) {
+      const isScandal = topicNorm.includes('escandalo') || topicNorm.includes('denuncia') || topicNorm.includes('dinheiro');
+      if (isScandal && !scandalTerms.some((term) => text.includes(normalize(term)))) return false;
+      if (!isScandal && !text.includes(topicNorm.split('/')[0])) {
+        // Não bloqueia temas genéricos demais; só reduz ruído quando houver match claro.
+      }
+    }
+
+    if (words.length && !words.some((word) => text.includes(word))) return false;
+    return true;
+  }).slice(0, limit);
+
+  return {
+    safeMode: true,
+    finalQuery,
+    inserted: 0,
+    updated: 0,
+    skipped: Math.max(0, (data?.length || 0) - filtered.length),
+    skippedOld: 0,
+    skippedWithoutDate: 0,
+    skippedOutOfState: 0,
+    skippedNoScContext: 0,
+    stoppedEarly: false,
+    hours,
+    items: filtered.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      link: item.link,
+      sourceName: item.source_name ?? null,
+      sourceDomain: item.source_domain ?? null,
+      publishedAt: item.published_at,
+      city: item.city ?? null,
+      region: item.region ?? null,
+      topic: item.topic ?? null,
+      score: item.opportunity_score ?? 0,
+      summary: item.summary ?? null,
+    })),
+  };
+}
