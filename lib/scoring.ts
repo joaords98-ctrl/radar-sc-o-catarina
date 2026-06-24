@@ -5,10 +5,13 @@ const hotWords = [
   'acidente', 'rodovia', 'trânsito', 'caminhão', 'carro', 'tombou', 'interditada', 'br-101',
   'br-282', 'sc-155', 'porto', 'turismo', 'emprego', 'economia', 'indústria', 'comércio',
   'saúde', 'educação', 'câmara', 'prefeitura', 'vídeo', 'flagra', 'imagens',
+  'escândalo', 'irregularidade', 'improbidade', 'superfaturamento', 'nepotismo', 'rachadinha',
+  'afastamento', 'afastado', 'cpi', 'gaeco', 'ministério público', 'tribunal de contas',
 ];
 
 const urgentWords = [
   'morte', 'preso', 'foragido', 'investigação', 'fraude', 'cassação', 'desvio',
+  'corrupção', 'irregularidade', 'improbidade', 'superfaturamento', 'nepotismo', 'rachadinha', 'gaeco',
   'interdita', 'interditada', 'tombou', 'grave', 'emergência', 'alerta', 'vídeo', 'flagra',
 ];
 
@@ -55,8 +58,11 @@ export function inferAngle(title: string, topic?: string | null, city?: string |
   const place = city ? ` em ${city}` : ' em Santa Catarina';
   const lower = title.toLowerCase();
 
-  if (lower.includes('licitação') || lower.includes('contrato') || lower.includes('tce')) {
-    return `Apurar valores, contrato, responsáveis e impacto ao contribuinte${place}.`;
+  if (lower.includes('denúncia') || lower.includes('corrupção') || lower.includes('fraude') || lower.includes('improbidade') || lower.includes('irregularidade') || lower.includes('gaeco') || lower.includes('mpsc')) {
+    return `Apurar documentos, fonte oficial, defesa dos citados, valores envolvidos e impacto ao contribuinte${place}. Tratar como suspeita até confirmação.`;
+  }
+  if (lower.includes('licitação') || lower.includes('contrato') || lower.includes('tce') || lower.includes('tribunal de contas')) {
+    return `Apurar valores, contrato, responsáveis, decisão do órgão de controle e impacto ao contribuinte${place}.`;
   }
   if (lower.includes('acidente') || lower.includes('rodovia') || lower.includes('trânsito') || lower.includes('caminhão') || lower.includes('tombou')) {
     return `Checar local exato, estado das vítimas, liberação da rodovia e usar vídeo/imagens com crédito correto${place}.`;

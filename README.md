@@ -7,6 +7,7 @@ Versão de redação enxuta com **Clipping**, **Busca**, **Produção**, **Insta
 - `/` — início simplificado
 - `/clipping` — clipping do dia
 - `/radar` — busca ativa por cidade/tema/rodovia
+- `/escandalos` — radar de denúncias, contratos suspeitos e dinheiro público
 - `/production` — fila de pautas escolhidas para publicação
 - `/instagram` — fila Instagram
 - `/stories` — pautas agrupadas
@@ -143,3 +144,8 @@ O botão manual continua em modo rápido para não travar a tela.
 - O botão `Gerar base` agora usa o título real da notícia, resumo coletado, fonte, cidade/região, data e ângulo.
 - A matéria-base deixou de ser genérica e passou a destacar o fato central da pauta.
 - Instagram e roteiro curto também usam a notícia selecionada como gancho principal.
+
+
+## v13.10
+
+Inclui radar de escândalos/denúncias com buscas focadas em TCE-SC, MPSC, Gaeco, prefeituras, câmaras, contratos, licitações, saúde, educação e dinheiro público.

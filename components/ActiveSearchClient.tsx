@@ -33,9 +33,9 @@ type Result = {
 
 const cities = ['', 'Joinville', 'Florianópolis', 'Blumenau', 'Itajaí', 'Chapecó', 'Criciúma', 'Lages', 'Balneário Camboriú', 'Brusque', 'São José', 'Palhoça', 'Jaraguá do Sul'];
 const regions = ['', 'Oeste', 'Meio-Oeste', 'Sul', 'Norte', 'Vale do Itajaí', 'Litoral Norte', 'Grande Florianópolis', 'Serra'];
-const topics = ['', 'Geral', 'Trânsito/Rodovias', 'Política', 'Serviços Públicos', 'Defesa Civil', 'Economia', 'Causa Animal', 'Segurança Pública'];
+const topics = ['', 'Geral', 'Escândalos/Denúncias', 'Dinheiro Público', 'Trânsito/Rodovias', 'Política', 'Serviços Públicos', 'Defesa Civil', 'Economia', 'Causa Animal', 'Segurança Pública'];
 
-const quickSearches = [
+const defaultQuickSearches = [
   'vídeo caminhão tombou rodovia SC-155',
   'acidente BR-101 vídeo carro caminhão Santa Catarina',
   'prefeitura investigação contrato Santa Catarina',
@@ -44,12 +44,30 @@ const quickSearches = [
   'câmara vereadores projeto polêmico Santa Catarina',
 ];
 
-export function ActiveSearchClient() {
-  const [q, setQ] = useState('');
-  const [city, setCity] = useState('');
-  const [region, setRegion] = useState('');
-  const [topic, setTopic] = useState('');
-  const [hours, setHours] = useState('24');
+type ActiveSearchClientProps = {
+  initialQ?: string;
+  initialCity?: string;
+  initialRegion?: string;
+  initialTopic?: string;
+  initialHours?: string;
+  quickSearches?: string[];
+  submitLabel?: string;
+};
+
+export function ActiveSearchClient({
+  initialQ = '',
+  initialCity = '',
+  initialRegion = '',
+  initialTopic = '',
+  initialHours = '24',
+  quickSearches = defaultQuickSearches,
+  submitLabel = 'Buscar agora',
+}: ActiveSearchClientProps = {}) {
+  const [q, setQ] = useState(initialQ);
+  const [city, setCity] = useState(initialCity);
+  const [region, setRegion] = useState(initialRegion);
+  const [topic, setTopic] = useState(initialTopic);
+  const [hours, setHours] = useState(initialHours);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -140,7 +158,7 @@ export function ActiveSearchClient() {
               disabled={!canSearch || loading}
               className="w-full rounded-xl bg-zinc-950 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? 'Buscando...' : 'Buscar agora'}
+              {loading ? 'Buscando...' : submitLabel}
             </button>
           </div>
         </div>

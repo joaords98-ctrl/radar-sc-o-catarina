@@ -6,6 +6,7 @@ const links = [
   { href: '/', label: 'Início', short: 'Início' },
   { href: '/clipping', label: 'Clipping', short: 'Clip', highlight: true },
   { href: '/radar', label: 'Busca', short: 'Busca' },
+  { href: '/escandalos', label: 'Escândalos', short: 'Escând.', highlight: true },
   { href: '/production', label: 'Produção', short: 'Pautas', highlight: true },
   { href: '/instagram', label: 'Instagram', short: 'Insta' },
   { href: '/social', label: 'Fontes sociais', short: 'Social' },
