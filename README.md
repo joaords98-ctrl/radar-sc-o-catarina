@@ -168,3 +168,10 @@ Hotfix definitivo da Busca ativa/Escândalos: o endpoint `/api/panel/active-sear
 - Escândalos agora aparecem a partir da base coletada pelo Radar.
 - A coleta pesada e os crons automáticos incluem buscas fixas de denúncias, TCE-SC, MPSC, Gaeco, licitação, contrato, superfaturamento, improbidade e dinheiro público.
 - Correção definitiva para evitar o erro `Unexpected token 'A'... is not valid JSON` na tela de escândalos.
+
+
+## v13.14 — Hotfix build TypeScript
+
+Corrige erro de build em `lib/activeSearch.ts` removendo `.catch()` direto do builder Supabase e usando `try/catch`.
+
+Também mantém a lógica da v13.13: Escândalos sem busca manual pesada; a coleta pesada e os crons encontram escândalos automaticamente.

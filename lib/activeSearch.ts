@@ -220,13 +220,17 @@ export async function runActiveSearch(input: {
     });
   }
 
-  await supabase.from('cron_runs').insert({
-    job_name: 'active-search',
-    inserted_count: inserted,
-    skipped_count: skipped,
-    error_count: 0,
-    errors: stoppedEarly ? ['Busca interrompida antes do limite da Vercel.'] : [],
-  }).catch(() => null);
+  try {
+    await supabase.from('cron_runs').insert({
+      job_name: 'active-search',
+      inserted_count: inserted,
+      skipped_count: skipped,
+      error_count: 0,
+      errors: stoppedEarly ? ['Busca interrompida antes do limite da Vercel.'] : [],
+    });
+  } catch {
+    // Não interrompe a busca se o registro de log falhar.
+  }
 
   return {
     finalQuery,
