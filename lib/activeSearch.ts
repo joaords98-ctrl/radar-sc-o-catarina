@@ -3,8 +3,7 @@ import { getSupabaseAdmin } from './supabaseAdmin';
 import { buildGoogleNewsRssUrl, normalizeExternalId, splitGoogleNewsTitle } from './googleNews';
 import { inferAngle, scoreNews } from './scoring';
 import { classifySantaCatarinaNews } from './scGeo';
-import { buildStoryKey, refreshRepercussionMetrics, sourceDomainFromUrl } from './repercussion';
-import { getRecentCutoffIso, isRecentPublishedAt } from './recent';
+import { buildStoryKey, sourceDomainFromUrl } from './repercussion';
 
 const parser = new Parser();
 
@@ -18,6 +17,46 @@ function hasScContext(query: string) {
     text.includes('santa catarina') ||
     text.includes('catarinense') ||
     /\b(sc[-\s]?\d{2,3}|br[-\s]?(101|282|470|280|116|153|163|158|285))\b/i.test(query);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} demorou demais e foi interrompida.`)), timeoutMs);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
+async function fetchGoogleNewsFeed(query: string, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(buildGoogleNewsRssUrl(query), {
+      signal: controller.signal,
+      headers: {
+        'user-agent': 'Mozilla/5.0 Radar SC O Catarina',
+        'accept': 'application/rss+xml, application/xml, text/xml, */*',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Google News respondeu ${response.status}`);
+    }
+
+    const xml = await response.text();
+    return parser.parseString(xml);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function buildActiveSearchQuery(input: {
@@ -46,16 +85,19 @@ export async function runActiveSearch(input: {
   hours?: number;
   limit?: number;
 }) {
+  const startedAt = Date.now();
+  const maxRunMs = 42000;
   const supabase = getSupabaseAdmin();
   const hours = Math.max(1, Math.min(Number(input.hours || 24), 72));
-  const limit = Math.max(5, Math.min(Number(input.limit || 30), 50));
+  // Busca ativa precisa ser rápida. Coleta pesada fica no botão/cron próprios.
+  const limit = Math.max(5, Math.min(Number(input.limit || 12), 15));
   const finalQuery = buildActiveSearchQuery(input);
 
   if (!input.q?.trim() && !input.city && !input.region && !input.topic) {
     throw new Error('Informe uma cidade, região, tema ou termo de busca.');
   }
 
-  const feed = await parser.parseURL(buildGoogleNewsRssUrl(finalQuery));
+  const feed = await withTimeout(fetchGoogleNewsFeed(finalQuery), 14000, 'A busca no Google News');
   const items = feed.items.slice(0, limit);
 
   let inserted = 0;
@@ -65,6 +107,7 @@ export async function runActiveSearch(input: {
   let skippedWithoutDate = 0;
   let skippedOutOfState = 0;
   let skippedNoScContext = 0;
+  let stoppedEarly = false;
   const savedItems: Array<{
     id?: string;
     title: string;
@@ -80,6 +123,11 @@ export async function runActiveSearch(input: {
   }> = [];
 
   for (const item of items) {
+    if (Date.now() - startedAt > maxRunMs) {
+      stoppedEarly = true;
+      break;
+    }
+
     if (!item.link || !item.title) {
       skipped += 1;
       continue;
@@ -88,12 +136,6 @@ export async function runActiveSearch(input: {
     const publishedAt = item.isoDate ?? item.pubDate ?? null;
     if (!publishedAt) {
       skippedWithoutDate += 1;
-      skipped += 1;
-      continue;
-    }
-
-    if (!isRecentPublishedAt(publishedAt, hours)) {
-      skippedOld += 1;
       skipped += 1;
       continue;
     }
@@ -178,15 +220,13 @@ export async function runActiveSearch(input: {
     });
   }
 
-  await refreshRepercussionMetrics(supabase, { sinceIso: getRecentCutoffIso(hours) });
-
   await supabase.from('cron_runs').insert({
     job_name: 'active-search',
     inserted_count: inserted,
     skipped_count: skipped,
     error_count: 0,
-    errors: [],
-  });
+    errors: stoppedEarly ? ['Busca interrompida antes do limite da Vercel.'] : [],
+  }).catch(() => null);
 
   return {
     finalQuery,
@@ -197,6 +237,7 @@ export async function runActiveSearch(input: {
     skippedWithoutDate,
     skippedOutOfState,
     skippedNoScContext,
+    stoppedEarly,
     hours,
     items: savedItems,
   };

@@ -3,6 +3,7 @@ import { runActiveSearch } from '@/lib/activeSearch';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 55;
 
 export async function POST(req: Request) {
   try {
@@ -13,12 +14,12 @@ export async function POST(req: Request) {
       region: typeof body.region === 'string' && body.region ? body.region : null,
       topic: typeof body.topic === 'string' && body.topic ? body.topic : null,
       hours: Number(body.hours || 24),
-      limit: Number(body.limit || 30),
+      limit: Number(body.limit || 12),
     });
 
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: message }, { status: 200 });
   }
 }

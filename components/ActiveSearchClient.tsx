@@ -19,6 +19,7 @@ type ActiveSearchItem = {
 
 type Result = {
   ok: boolean;
+  stoppedEarly?: boolean;
   error?: string;
   finalQuery?: string;
   inserted?: number;
@@ -92,9 +93,27 @@ export function ActiveSearchClient({
       const res = await fetch('/api/panel/active-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q, city, region, topic, hours: Number(hours), limit: 35 }),
+        body: JSON.stringify({ q, city, region, topic, hours: Number(hours), limit: 12 }),
       });
-      const data = await res.json();
+
+      const text = await res.text();
+      let data: Result;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {
+          ok: false,
+          error: text?.includes('An error occurred') || text?.includes('FUNCTION_INVOCATION_TIMEOUT')
+            ? 'A busca demorou mais que o limite da Vercel. Tente uma busca mais específica ou use a coleta pesada por região.'
+            : `Resposta inesperada do servidor: ${text.slice(0, 160) || 'vazia'}`,
+        };
+      }
+
+      if (!res.ok && data.ok !== false) {
+        data = { ok: false, error: `Erro HTTP ${res.status}` };
+      }
+
       setResult(data);
     } catch (err) {
       setResult({ ok: false, error: err instanceof Error ? err.message : 'Erro desconhecido' });
@@ -183,9 +202,10 @@ export function ActiveSearchClient({
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Resultado da busca ativa</p>
                   <h3 className="mt-1 text-xl font-black sm:text-2xl">{result.items?.length ?? 0} notícias salvas no Radar</h3>
                   <p className="mt-2 text-sm text-zinc-600">
-                    {result.inserted ?? 0} novas · {result.updated ?? 0} atualizadas · {result.skippedOld ?? 0} antigas ignoradas · {result.skippedOutOfState ?? 0} fora de SC bloqueadas.
+                    {result.inserted ?? 0} novas · {result.updated ?? 0} atualizadas · {result.skippedOutOfState ?? 0} fora de SC bloqueadas.
                   </p>
                   {result.finalQuery ? <p className="mt-2 text-xs text-zinc-500">Consulta usada: {result.finalQuery}</p> : null}
+                  {result.stoppedEarly ? <p className="mt-2 text-xs font-bold text-amber-700">Busca interrompida antes do limite da Vercel. Os resultados parciais foram salvos.</p> : null}
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                   {result.finalQuery ? <button onClick={() => copyText('consulta', result.finalQuery || '')} className="w-full rounded-xl bg-zinc-100 px-4 py-2 text-center text-sm font-bold text-zinc-800 sm:w-auto">Copiar consulta</button> : null}

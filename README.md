@@ -149,3 +149,10 @@ O botão manual continua em modo rápido para não travar a tela.
 ## v13.10
 
 Inclui radar de escândalos/denúncias com buscas focadas em TCE-SC, MPSC, Gaeco, prefeituras, câmaras, contratos, licitações, saúde, educação e dinheiro público.
+
+## v13.11 — Hotfix JSON / Busca ativa
+
+- Corrige erro `Unexpected token 'A'... is not valid JSON` quando a Vercel retornava texto em timeout.
+- Reduz a busca ativa para retorno rápido.
+- Remove repercussão pesada da busca ativa manual.
+- Mantém coleta pesada no botão/cron próprios.
