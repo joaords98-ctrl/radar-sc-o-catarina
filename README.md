@@ -161,3 +161,10 @@ Inclui radar de escândalos/denúncias com buscas focadas em TCE-SC, MPSC, Gaeco
 ## v13.12
 
 Hotfix definitivo da Busca ativa/Escândalos: o endpoint `/api/panel/active-search` passou a usar busca segura na base já coletada, retornando JSON sempre e evitando timeout 504 da Vercel. Para buscar notícias novas, use Coleta rápida/pesada ou aguarde os crons.
+
+## v13.13 — Escândalos sem busca manual
+
+- A aba `/escandalos` não chama mais `/api/panel/active-search`.
+- Escândalos agora aparecem a partir da base coletada pelo Radar.
+- A coleta pesada e os crons automáticos incluem buscas fixas de denúncias, TCE-SC, MPSC, Gaeco, licitação, contrato, superfaturamento, improbidade e dinheiro público.
+- Correção definitiva para evitar o erro `Unexpected token 'A'... is not valid JSON` na tela de escândalos.

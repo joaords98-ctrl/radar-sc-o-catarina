@@ -48,6 +48,38 @@ const MODE_SETTINGS: Record<CollectMode, {
   },
 };
 
+
+const SCANDAL_QUERIES: RssQuery[] = [
+  { id: 'auto-escandalos-1', label: 'Escândalos SC · denúncias e investigações', query: 'denúncia OR investigação OR irregularidade prefeitura Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 120, enabled: true },
+  { id: 'auto-escandalos-2', label: 'Escândalos SC · TCE-SC', query: 'TCE SC irregularidade prefeitura contrato licitação', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 118, enabled: true },
+  { id: 'auto-escandalos-3', label: 'Escândalos SC · MPSC', query: 'MPSC investigação prefeitura vereador servidor Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 118, enabled: true },
+  { id: 'auto-escandalos-4', label: 'Escândalos SC · Gaeco', query: 'Gaeco operação prefeitura câmara vereador Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 118, enabled: true },
+  { id: 'auto-escandalos-5', label: 'Escândalos SC · licitações e contratos', query: 'fraude licitação superfaturamento contrato Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 116, enabled: true },
+  { id: 'auto-escandalos-6', label: 'Escândalos SC · improbidade', query: 'improbidade administrativa prefeito vereador Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 114, enabled: true },
+  { id: 'auto-escandalos-7', label: 'Escândalos SC · dinheiro público', query: 'desvio dinheiro público saúde educação obra Santa Catarina', topic: 'Dinheiro Público', city: null, region: null, priority_weight: 113, enabled: true },
+  { id: 'auto-escandalos-8', label: 'Escândalos SC · ação civil pública', query: 'ação civil pública prefeitura Santa Catarina Ministério Público', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 112, enabled: true },
+  { id: 'auto-escandalos-9', label: 'Escândalos SC · nepotismo', query: 'nepotismo prefeitura câmara vereador Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 110, enabled: true },
+  { id: 'auto-escandalos-10', label: 'Escândalos SC · câmaras municipais', query: 'CPI Câmara vereadores Santa Catarina irregularidade denúncia', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 108, enabled: true },
+];
+
+function mergeScandalQueries(mode: CollectMode, queries: RssQuery[], limit: number) {
+  if (mode !== 'scheduled' && mode !== 'full') {
+    return queries.slice(0, limit);
+  }
+
+  const seen = new Set<string>();
+  const merged = [...SCANDAL_QUERIES, ...queries]
+    .filter((query) => {
+      const key = `${query.query}|${query.label}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => (b.priority_weight ?? 0) - (a.priority_weight ?? 0));
+
+  return merged.slice(0, limit);
+}
+
 async function parseFeedWithTimeout(url: string, timeoutMs: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -105,7 +137,9 @@ export async function collectNews(options: CollectOptions = {}) {
   let stoppedByDeadline = false;
   const errors: string[] = [];
 
-  for (const query of (queries ?? []) as RssQuery[]) {
+  const queryList = mergeScandalQueries(mode, (queries ?? []) as RssQuery[], settings.queryLimit);
+
+  for (const query of queryList) {
     if (isDeadlineReached(deadlineAt)) {
       stoppedByDeadline = true;
       break;
