@@ -7,7 +7,7 @@ const links = [
   { href: '/clipping', label: 'Clipping', short: 'Clip', highlight: true },
   { href: '/radar', label: 'Busca', short: 'Busca' },
   { href: '/escandalos', label: 'Escândalos', short: 'Escând.', highlight: true },
-  { href: '/production', label: 'Produção', short: 'Pautas', highlight: true },
+  { href: '/production', label: 'Produção', short: 'Pautas', highlight: true, tone: 'blue' },
   { href: '/instagram', label: 'Instagram', short: 'Insta' },
   { href: '/social', label: 'Fontes sociais', short: 'Social' },
   { href: '/competitors', label: 'Concorrência', short: 'Concorr.' },
@@ -27,7 +27,7 @@ export function MainNav() {
         const active = isActive(pathname, link.href);
         const activeClass = active
           ? 'bg-zinc-950 text-white shadow-sm'
-          : link.href === '/production'
+          : link.tone === 'blue'
             ? 'bg-blue-100 text-blue-950 ring-1 ring-blue-200 hover:bg-blue-200'
             : link.highlight
               ? 'bg-emerald-100 text-emerald-950 ring-1 ring-emerald-200 hover:bg-emerald-200'

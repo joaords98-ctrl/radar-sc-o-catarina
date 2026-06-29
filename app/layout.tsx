@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ManualCollectButton } from '@/components/ManualCollectButton';
 import { MainNav } from '@/components/MainNav';
+import { getRadarModeLabel, isRadarLoginRequired } from '@/lib/radarAccess';
 
 export const metadata: Metadata = {
   title: 'Radar SC — O Catarina',
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const loginRequired = isRadarLoginRequired();
+
   return (
     <html lang="pt-BR">
       <body>
@@ -19,8 +22,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <a href="/" className="min-w-0" aria-label="Voltar ao início do Radar SC">
                   <p className="truncate text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-xs sm:tracking-[0.25em]">O Catarina</p>
                   <h1 className="truncate text-xl font-black tracking-tight text-zinc-950 sm:text-2xl">Radar SC</h1>
+                  <p className="mt-1 text-[11px] font-bold text-zinc-500">{getRadarModeLabel()}</p>
                 </a>
-                <div className="shrink-0">
+                <div className="flex shrink-0 items-start gap-2">
+                  {loginRequired ? (
+                    <a
+                      href="/api/auth/logout"
+                      className="hidden rounded-full bg-zinc-100 px-3 py-2 text-xs font-black text-zinc-800 ring-1 ring-zinc-200 transition hover:bg-zinc-200 sm:inline-flex"
+                    >
+                      Sair
+                    </a>
+                  ) : null}
                   <ManualCollectButton variant="header" />
                 </div>
               </div>
