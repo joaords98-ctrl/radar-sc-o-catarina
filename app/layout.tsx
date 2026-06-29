@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ManualCollectButton } from '@/components/ManualCollectButton';
 import { MainNav } from '@/components/MainNav';
-import { getRadarModeLabel, isRadarLoginRequired } from '@/lib/radarAccess';
+import { getRadarModeLabel, isRadarEditorialLoginRequired, isRadarLoginRequired } from '@/lib/radarAccess';
 
 export const metadata: Metadata = {
   title: 'Radar SC — O Catarina',
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const loginRequired = isRadarLoginRequired();
+  const showLogout = loginRequired || isRadarEditorialLoginRequired();
 
   return (
     <html lang="pt-BR">
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <p className="mt-1 text-[11px] font-bold text-zinc-500">{getRadarModeLabel()}</p>
                 </a>
                 <div className="flex shrink-0 items-start gap-2">
-                  {loginRequired ? (
+                  {showLogout ? (
                     <a
                       href="/api/auth/logout"
                       className="hidden rounded-full bg-zinc-100 px-3 py-2 text-xs font-black text-zinc-800 ring-1 ring-zinc-200 transition hover:bg-zinc-200 sm:inline-flex"

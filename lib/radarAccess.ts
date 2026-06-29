@@ -4,10 +4,16 @@ export function isRadarLoginRequired() {
   return process.env.RADAR_REQUIRE_LOGIN === 'true' || process.env.RADAR_MODE === 'private';
 }
 
+export function isRadarEditorialLoginRequired() {
+  return process.env.RADAR_PROTECT_EDITORIAL !== 'false';
+}
+
 export function getRadarSessionToken() {
   return process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '';
 }
 
 export function getRadarModeLabel() {
-  return isRadarLoginRequired() ? 'Versão completa com login' : 'Versão sem login';
+  if (isRadarLoginRequired()) return 'Versão completa com login';
+  if (isRadarEditorialLoginRequired()) return 'Clipping aberto · Redação com login';
+  return 'Versão sem login';
 }

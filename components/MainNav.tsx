@@ -8,6 +8,7 @@ const links = [
   { href: '/radar', label: 'Busca', short: 'Busca' },
   { href: '/escandalos', label: 'Escândalos', short: 'Escând.', highlight: true },
   { href: '/production', label: 'Produção', short: 'Pautas', highlight: true, tone: 'blue' },
+  { href: '/redacao', label: 'Redação', short: 'Redação', highlight: true, tone: 'dark' },
   { href: '/instagram', label: 'Instagram', short: 'Insta' },
   { href: '/social', label: 'Fontes sociais', short: 'Social' },
   { href: '/competitors', label: 'Concorrência', short: 'Concorr.' },
@@ -27,6 +28,8 @@ export function MainNav() {
         const active = isActive(pathname, link.href);
         const activeClass = active
           ? 'bg-zinc-950 text-white shadow-sm'
+          : link.tone === 'dark'
+            ? 'bg-zinc-900 text-white ring-1 ring-zinc-800 hover:bg-zinc-800'
           : link.tone === 'blue'
             ? 'bg-blue-100 text-blue-950 ring-1 ring-blue-200 hover:bg-blue-200'
             : link.highlight

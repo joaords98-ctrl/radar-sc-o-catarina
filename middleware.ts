@@ -6,6 +6,10 @@ function isLoginRequired() {
   return process.env.RADAR_REQUIRE_LOGIN === 'true' || process.env.RADAR_MODE === 'private';
 }
 
+function isEditorialLoginRequired() {
+  return process.env.RADAR_PROTECT_EDITORIAL !== 'false';
+}
+
 function expectedToken() {
   return process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '';
 }
@@ -21,11 +25,21 @@ function isPublicPath(pathname: string) {
   );
 }
 
-export function middleware(req: NextRequest) {
-  if (!isLoginRequired()) return NextResponse.next();
+function isProtectedEditorialPath(pathname: string) {
+  return (
+    pathname === '/draft' ||
+    pathname.startsWith('/draft/') ||
+    pathname === '/redacao' ||
+    pathname.startsWith('/redacao/')
+  );
+}
 
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (isPublicPath(pathname)) return NextResponse.next();
+
+  const shouldProtect = isLoginRequired() || (isEditorialLoginRequired() && isProtectedEditorialPath(pathname));
+  if (!shouldProtect) return NextResponse.next();
 
   const token = expectedToken();
   if (!token) {

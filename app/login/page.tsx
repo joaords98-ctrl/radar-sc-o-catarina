@@ -1,4 +1,5 @@
-import { isRadarLoginRequired } from '@/lib/radarAccess';
+import { redirect } from 'next/navigation';
+import { isRadarEditorialLoginRequired, isRadarLoginRequired } from '@/lib/radarAccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const logout = typeof params.logout === 'string' ? params.logout : undefined;
   const message = messageFor(error, logout);
   const loginRequired = isRadarLoginRequired();
+  const editorialLoginRequired = isRadarEditorialLoginRequired();
+
+  if (!loginRequired && !editorialLoginRequired) {
+    redirect('/');
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-8">
@@ -28,12 +34,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <p className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">O Catarina</p>
         <h1 className="mt-3 text-3xl font-black leading-tight text-zinc-950">Radar SC</h1>
         <p className="mt-3 text-sm leading-6 text-zinc-600">
-          Acesse a versão completa da redação para coleta, produção, escândalos, exportação de matéria e controles internos.
+          Acesse a área de redação para gerar base editorial, exportar matéria pronta para o site e usar controles internos.
         </p>
 
-        {!loginRequired ? (
+        {!loginRequired && editorialLoginRequired ? (
           <div className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-950 ring-1 ring-emerald-100">
-            Esta instalação está em modo sem login. Para ativar login, configure <strong>RADAR_REQUIRE_LOGIN=true</strong> na Vercel.
+            O clipping, escândalos, início e produção ficam abertos. A área de redação e o botão <strong>Gerar base</strong> exigem login.
           </div>
         ) : null}
 
