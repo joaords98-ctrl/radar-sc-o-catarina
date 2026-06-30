@@ -60,8 +60,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!response.ok) {
+      const portalMessage = String(data.error ?? data.message ?? '');
+      const friendlyError = response.status === 401
+        ? 'Não autorizado. Confira se PORTAL_DRAFT_TOKEN no Radar é igual ao RADAR_DRAFT_TOKEN/PORTAL_DRAFT_TOKEN no portal.'
+        : portalMessage || `Portal retornou status ${response.status}.`;
       return NextResponse.json(
-        { ok: false, error: String(data.error ?? data.message ?? `Portal retornou status ${response.status}.`) },
+        { ok: false, error: friendlyError },
         { status: response.status },
       );
     }
