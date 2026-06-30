@@ -1,10 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 function cleanEndpoint(value: string | undefined) {
   return (value ?? '').trim().replace(/^["']|["']$/g, '').trim();
+}
+
+function fingerprint(value: string) {
+  const cleaned = cleanEndpoint(value);
+  if (!cleaned) return 'empty';
+  return `${cleaned.length}:${crypto.createHash('sha256').update(cleaned).digest('hex').slice(0, 10)}`;
+}
+
+export async function GET() {
+  const endpoint = cleanEndpoint(process.env.PORTAL_DRAFT_ENDPOINT);
+  const token = cleanEndpoint(process.env.PORTAL_DRAFT_TOKEN);
+
+  return NextResponse.json({
+    ok: true,
+    endpoint: 'portal-send-draft',
+    version: 'v14.11-debug',
+    portalDraftEndpoint: endpoint || null,
+    hasPortalDraftToken: Boolean(token),
+    portalDraftTokenFingerprint: fingerprint(token),
+    expectedPortalFingerprintShouldMatch: '40:f86ad8c04b',
+  });
 }
 
 export async function POST(req: NextRequest) {
