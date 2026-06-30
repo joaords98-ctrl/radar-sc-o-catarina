@@ -14,6 +14,34 @@ function fingerprint(value: string) {
   return `${cleaned.length}:${crypto.createHash('sha256').update(cleaned).digest('hex').slice(0, 10)}`;
 }
 
+function removeSourceLinks(value: string) {
+  return String(value ?? '')
+    .replace(/\*\*Fonte inicial para checagem:\*\*\s*https?:\/\/\S+/gi, '')
+    .replace(/Fonte inicial para checagem:\s*https?:\/\/\S+/gi, '')
+    .replace(/https?:\/\/news\.google\.com\/rss\/articles\/\S+/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function looksLikeUrlOnly(value: string) {
+  const cleaned = String(value ?? '').trim();
+  if (!cleaned) return true;
+  const compact = cleaned.replace(/\s+/g, '');
+  return /^https?:\/\//i.test(compact) && !/[.!?]\s+[A-ZÁÉÍÓÚÃÕÂÊÔÇ]/.test(cleaned);
+}
+
+function fallbackBody(title: string, supportLine: string, category: unknown, city: unknown) {
+  const place = typeof city === 'string' && city.trim() ? city.trim() : 'Santa Catarina';
+  const lead = supportLine
+    ? `**${place}** — ${supportLine.trim()}`
+    : `**${place}** — A pauta sobre **${title}** foi salva como rascunho para revisão da redação do **O Catarina**.`;
+  const sensitive = /denúncia|denuncia|escândalo|escandalo|investigação|investigacao|fraude|superfaturamento|tce|mpsc|gaeco/i.test(`${title} ${supportLine} ${String(category ?? '')}`);
+  const caution = sensitive
+    ? '\n\nPor se tratar de assunto sensível, a redação deve separar **fato confirmado**, **suspeita**, **denúncia**, **investigação** ou **acusação**, sem apontar culpa antes de confirmação oficial.'
+    : '';
+  return `${lead}\n\nA matéria precisa ser revisada antes da publicação, com checagem de data, local, órgão responsável, envolvidos e desdobramentos.${caution}`;
+}
+
 export async function GET() {
   const endpoint = cleanEndpoint(process.env.PORTAL_DRAFT_ENDPOINT);
   const token = cleanEndpoint(process.env.PORTAL_DRAFT_TOKEN);
@@ -44,7 +72,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const title = String(body.title ?? '').trim();
     const supportLine = String(body.supportLine ?? '').trim();
-    const content = String(body.content ?? '').trim();
+    const rawContent = removeSourceLinks(String(body.content ?? '').trim());
+    const content = looksLikeUrlOnly(rawContent)
+      ? fallbackBody(title, supportLine, body.category, body.city)
+      : rawContent;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -60,7 +91,7 @@ export async function POST(req: NextRequest) {
       status: 'draft',
       category: body.category ?? null,
       city: body.city ?? null,
-      sourceUrl: body.sourceUrl ?? null,
+      sourceUrl: null,
       origin: 'radar-sc-o-catarina',
     };
 

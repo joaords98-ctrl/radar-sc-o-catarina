@@ -17,6 +17,88 @@ function cleanText(value: string | null | undefined) {
     .trim();
 }
 
+type SourceContext = {
+  url: string;
+  title: string;
+  description: string;
+  paragraphs: string[];
+  fetched: boolean;
+};
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+function stripHtml(value: string) {
+  return cleanText(decodeHtml(value.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')));
+}
+
+function metaContent(html: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return stripHtml(match[1]);
+  }
+  return '';
+}
+
+function extractSourceContext(html: string, url: string): SourceContext {
+  const title = metaContent(html, [
+    /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<title[^>]*>([\s\S]*?)<\/title>/i,
+  ]);
+  const description = metaContent(html, [
+    /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<meta[^>]+name=["']twitter:description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+  ]);
+  const paragraphMatches = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi));
+  const paragraphs = paragraphMatches
+    .map((match) => stripHtml(match[1]))
+    .filter((text) => text.length >= 70)
+    .filter((text) => !/cookies|newsletter|publicidade|assine|compartilhe|whatsapp|instagram|facebook|leia tamb[eé]m/i.test(text))
+    .slice(0, 5);
+
+  return { url, title, description, paragraphs, fetched: Boolean(title || description || paragraphs.length) };
+}
+
+async function fetchSourceContext(url: string): Promise<SourceContext | null> {
+  if (!/^https?:\/\//i.test(url)) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6500);
+
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RadarSC/1.0; +https://ocatarina.com.br)',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      next: { revalidate: 600 },
+    });
+
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!response.ok || !contentType.includes('text/html')) return null;
+
+    const html = await response.text();
+    const context = extractSourceContext(html, response.url || url);
+    return context.fetched ? context : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function truncate(value: string, limit: number) {
   const clean = cleanText(value);
   if (clean.length <= limit) return clean;
@@ -76,22 +158,32 @@ function isSensitiveCase(title: string, summary: string, topic: string) {
   return /escândalo|escandalo|denúncia|denuncia|acusação|acusacao|corrupção|corrupcao|fraude|investiga|operação|operacao|licitação|licitacao|improbidade|crime|prisão|prisao|suspeito/i.test(`${topic} ${title} ${summary}`);
 }
 
-function buildSupportLine(_item: NewsItem, title: string, summary: string, source: string, place: string) {
-  if (summary) return truncate(summary, 145);
+function sourceSummary(summary: string, sourceContext: SourceContext | null) {
+  return cleanText(summary) || cleanText(sourceContext?.description) || cleanText(sourceContext?.paragraphs?.[0]);
+}
+
+function buildSupportLine(_item: NewsItem, title: string, summary: string, source: string, place: string, sourceContext: SourceContext | null) {
+  const bestSummary = sourceSummary(summary, sourceContext);
+  if (bestSummary) return truncate(bestSummary, 145);
   return truncate(`Caso em ${place} foi localizado pelo Radar a partir de publicação de ${source}.`, 145);
 }
 
-function buildSiteBody(item: NewsItem, title: string, summary: string, source: string, place: string, category: string) {
+function buildSiteBody(item: NewsItem, title: string, summary: string, source: string, place: string, category: string, sourceContext: SourceContext | null) {
   const published = item.published_at ? formatBrazilDateTimeWithZone(item.published_at) : 'data não informada';
   const angle = cleanText(item.angle);
   const notes = cleanText(item.notes);
-  const hasSensitiveTopic = isSensitiveCase(title, summary, category);
+  const bestSummary = sourceSummary(summary, sourceContext);
+  const sourceParagraphs = (sourceContext?.paragraphs ?? []).filter((paragraph) => paragraph !== bestSummary).slice(0, 3);
+  const hasSensitiveTopic = isSensitiveCase(title, bestSummary, category);
 
-  const lead = summary
-    ? `**${place}** — ${sentence(summary)} A informação foi localizada pelo **Radar do O Catarina** a partir de publicação de **${source}**.`
+  const lead = bestSummary
+    ? `**${place}** — ${sentence(bestSummary)} A informação foi localizada pelo **Radar do O Catarina** a partir de publicação de **${source}**.`
     : `**${place}** — O **Radar do O Catarina** identificou uma pauta sobre **${title}** a partir de publicação de **${source}**. A informação ainda depende de complementação pela redação antes da publicação final.`;
 
   const context = `A pauta foi classificada na categoria **${category}** e foi capturada em **${published}**.`;
+  const sourceDetails = sourceParagraphs.length
+    ? `\n\nSegundo as informações coletadas na fonte inicial, ${sourceParagraphs.map(sentence).join(' ')}`
+    : '';
   const angleBlock = angle ? `\n\nO ângulo sugerido para a cobertura é: **${sentence(angle)}**` : '';
   const notesBlock = notes ? `\n\nA apuração inicial também registrou a seguinte observação: **${sentence(notes)}**` : '';
   const sensitiveBlock = hasSensitiveTopic
@@ -101,16 +193,18 @@ function buildSiteBody(item: NewsItem, title: string, summary: string, source: s
     ? `\n\nO Radar identificou repercussão do tema em **${item.media_mentions_count}** menções/fontes monitoradas${item.top_media_sources?.length ? `, incluindo **${item.top_media_sources.slice(0, 4).join(', ')}**` : ''}.`
     : '';
 
-  return `${lead}\n\n${context}${angleBlock}${repercussion}${notesBlock}${sensitiveBlock}\n\nO **O Catarina** acompanha o caso e pode atualizar a matéria conforme novas informações oficiais, documentos ou manifestações forem divulgados.`;
+  return `${lead}\n\n${context}${sourceDetails}${angleBlock}${repercussion}${notesBlock}${sensitiveBlock}\n\nO **O Catarina** acompanha o caso e pode atualizar a matéria conforme novas informações oficiais, documentos ou manifestações forem divulgados.`;
 }
 
-function buildChecklist(item: NewsItem, source: string, place: string, category: string, title: string, summary: string) {
-  const hasSummary = Boolean(summary);
+function buildChecklist(item: NewsItem, source: string, place: string, category: string, title: string, summary: string, sourceContext: SourceContext | null) {
+  const hasSummary = Boolean(sourceSummary(summary, sourceContext));
   const sensitive = isSensitiveCase(title, summary, category);
   return [
     `Categoria sugerida: ${category}`,
     `Fonte inicial: ${source}`,
     `Link: ${item.link}`,
+    `Conteúdo da fonte puxado: ${sourceContext?.fetched ? 'sim' : 'não; revisar link original antes de publicar'}`,
+    sourceContext?.url && sourceContext.url !== item.link ? `URL final identificada: ${sourceContext.url}` : null,
     `Cidade/região: ${place}`,
     `Informações suficientes: ${hasSummary ? 'parciais, revisar fonte original antes de publicar' : 'não, falta resumo/contexto da fonte original'}`,
     `Natureza do caso: ${sensitive ? 'sensível; separar fato confirmado de suspeita/denúncia/investigação/acusação' : 'factual; confirmar dados básicos antes de publicar'}`,
@@ -123,14 +217,15 @@ function buildChecklist(item: NewsItem, source: string, place: string, category:
     '- defesa/manifestação dos citados quando houver acusação ou suspeita',
     '- preservação de vítimas, crianças, adolescentes e pessoas vulneráveis',
     '- se há atualização, nota oficial, boletim, decisão ou procedimento formal',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
-function buildInstagramFromNews(item: NewsItem, title: string, summary: string, place: string, source: string, category: string) {
+function buildInstagramFromNews(item: NewsItem, title: string, summary: string, place: string, source: string, category: string, sourceContext: SourceContext | null) {
   const base = buildInstagramDraftForItem(item);
   const hook = truncate(title, 120);
-  const detail = summary
-    ? truncate(summary, 220)
+  const bestSummary = sourceSummary(summary, sourceContext);
+  const detail = bestSummary
+    ? truncate(bestSummary, 220)
     : `A pauta foi localizada a partir de ${source} e precisa de checagem antes da publicação final.`;
 
   const caution = isSensitiveCase(title, summary, category)
@@ -142,18 +237,19 @@ function buildInstagramFromNews(item: NewsItem, title: string, summary: string, 
   return { ...base, caption, reels };
 }
 
-function buildDraft(item: NewsItem) {
+async function buildDraft(item: NewsItem) {
   const title = cleanText(item.title) || 'Pauta sem título';
-  const summary = cleanText(item.summary);
+  const sourceContext = await fetchSourceContext(item.link);
+  const summary = sourceSummary(cleanText(item.summary), sourceContext);
   const source = sourceLabel(item);
   const place = placeLabel(item);
   const topic = topicLabel(item);
   const category = inferCategory(item, title, summary, topic);
   const siteTitle = truncate(title, 105);
-  const supportLine = buildSupportLine(item, title, summary, source, place);
-  const body = buildSiteBody(item, title, summary, source, place, category);
-  const checklist = buildChecklist(item, source, place, category, title, summary);
-  const instagramDraft = buildInstagramFromNews(item, title, summary, place, source, category);
+  const supportLine = buildSupportLine(item, title, summary, source, place, sourceContext);
+  const body = buildSiteBody(item, title, summary, source, place, category, sourceContext);
+  const checklist = buildChecklist(item, source, place, category, title, summary, sourceContext);
+  const instagramDraft = buildInstagramFromNews(item, title, summary, place, source, category, sourceContext);
 
   return {
     siteTitle,
@@ -185,12 +281,12 @@ export default async function DraftPage({ searchParams }: { searchParams: Promis
   const { data, error } = await supabase.from('news_items').select('*').eq('id', newsId).single();
   if (error) throw error;
   const item = data as NewsItem;
-  const draft = buildDraft(item);
+  const draft = await buildDraft(item);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
       <section className="rounded-2xl bg-zinc-950 p-5 text-white shadow-sm sm:rounded-3xl sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Base editorial v14.6</p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 sm:text-sm sm:tracking-[0.25em]">Base editorial v14.15</p>
         <h2 className="mt-3 text-2xl font-black leading-tight sm:text-4xl">Redação no padrão do O Catarina.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
           A matéria separa categoria, texto para site, checagem interna e Instagram. Casos sensíveis ficam com linguagem juridicamente segura.

@@ -95,6 +95,7 @@ Na tela de draft, a redação pode:
 - baixar `.json`;
 - copiar tudo.
 - enviar para o site como rascunho.
+- enviar para o portal sem gravar link da fonte no corpo da matéria.
 
 ## Padrão editorial do O Catarina
 
@@ -159,6 +160,8 @@ Resposta esperada do portal:
 Se o portal for WordPress, a rota pode ser substituída por um endpoint interno que chama a REST API do WordPress criando post com `status=draft`.
 
 Se o portal for Next/Supabase, a rota deve inserir na tabela de posts/notícias com status `draft` ou `rascunho`.
+
+O corpo enviado ao portal não deve levar link da fonte. A fonte fica no checklist interno do Radar.
 
 Incluí um exemplo em:
 
