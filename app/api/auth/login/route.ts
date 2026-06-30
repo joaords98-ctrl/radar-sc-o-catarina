@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RADAR_SESSION_COOKIE, getRadarSessionToken } from '@/lib/radarAccess';
+import { RADAR_SESSION_COOKIE, getRadarSessionToken, normalizeRadarSecret } from '@/lib/radarAccess';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
-  const password = String(form.get('password') ?? '');
+  const password = normalizeRadarSecret(String(form.get('password') ?? ''));
   const next = String(form.get('next') ?? '/') || '/';
-  const expectedPassword = process.env.RADAR_ADMIN_PASSWORD || process.env.RADAR_ADMIN_TOKEN || '';
+  const expectedPassword = normalizeRadarSecret(process.env.RADAR_ADMIN_PASSWORD || process.env.RADAR_ADMIN_TOKEN || '');
   const sessionToken = getRadarSessionToken();
 
   if (!expectedPassword || !sessionToken) {

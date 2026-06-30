@@ -1,5 +1,9 @@
 export const RADAR_SESSION_COOKIE = 'radar_session';
 
+export function normalizeRadarSecret(value: string) {
+  return value.trim().replace(/^["']|["']$/g, '').trim();
+}
+
 export function isRadarLoginRequired() {
   return process.env.RADAR_REQUIRE_LOGIN === 'true' || process.env.RADAR_MODE === 'private';
 }
@@ -9,7 +13,7 @@ export function isRadarEditorialLoginRequired() {
 }
 
 export function getRadarSessionToken() {
-  return process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '';
+  return normalizeRadarSecret(process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '');
 }
 
 export function getRadarModeLabel() {

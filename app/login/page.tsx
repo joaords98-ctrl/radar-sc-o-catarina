@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 function messageFor(error?: string, logout?: string) {
   if (logout) return { tone: 'ok', text: 'Sessão encerrada.' };
-  if (error === 'invalid') return { tone: 'error', text: 'Senha incorreta. Confira e tente novamente.' };
+  if (error === 'invalid') return { tone: 'error', text: 'Senha incorreta. Digite exatamente o valor configurado em RADAR_ADMIN_PASSWORD na Vercel.' };
   if (error === 'missing_config') {
     return {
       tone: 'error',

@@ -11,7 +11,7 @@ function isEditorialLoginRequired() {
 }
 
 function expectedToken() {
-  return process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '';
+  return (process.env.RADAR_ADMIN_TOKEN || process.env.RADAR_ADMIN_PASSWORD || '').trim().replace(/^["']|["']$/g, '').trim();
 }
 
 function isPublicPath(pathname: string) {
