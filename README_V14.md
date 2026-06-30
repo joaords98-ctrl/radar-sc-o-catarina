@@ -1,4 +1,4 @@
-# Radar SC v14.4 — Radar híbrido
+# Radar SC v14.6 — Radar híbrido
 
 Esta entrega deixa o Radar em um modelo híbrido: a operação principal pode ficar aberta, mas a redação fica protegida por login.
 
@@ -14,6 +14,8 @@ RADAR_MODE=public
 RADAR_PROTECT_EDITORIAL=true
 RADAR_ADMIN_PASSWORD=troque-esta-senha
 RADAR_ADMIN_TOKEN=troque-este-token-grande-e-aleatorio
+PORTAL_DRAFT_ENDPOINT=https://seu-portal.com/api/radar/drafts
+PORTAL_DRAFT_TOKEN=troque-este-token-do-portal
 ```
 
 Ficam abertos sem login:
@@ -77,6 +79,7 @@ Com login ativo, o middleware protege páginas e APIs internas. A rota `/login` 
 
 O botão **Gerar base** agora abre uma tela com:
 
+- categoria correta da notícia;
 - título do site;
 - linha de apoio;
 - corpo pronto para publicar;
@@ -91,6 +94,79 @@ Na tela de draft, a redação pode:
 - baixar `.html`;
 - baixar `.json`;
 - copiar tudo.
+- enviar para o site como rascunho.
+
+## Padrão editorial do O Catarina
+
+O gerador segue este padrão:
+
+- separa fato confirmado de suspeita, denúncia, investigação ou acusação;
+- não inventa dados;
+- não afirma culpa sem condenação ou confirmação oficial;
+- preserva vítimas, crianças, adolescentes e pessoas vulneráveis;
+- prioriza checagem com MPSC, Polícia Civil, Polícia Militar, TJSC, Prefeitura, Defesa Civil, Corpo de Bombeiros, PRF, TCE/SC ou órgão responsável;
+- usa tom jornalístico, claro, firme e juridicamente seguro;
+- em política, gestão pública, corrupção, gasto público ou denúncia, pode destacar impacto ao contribuinte, transparência e responsabilidade pública.
+
+A saída da matéria fica no formato:
+
+```txt
+Categoria correta da notícia: ...
+
+# Título
+
+**Linha de apoio curta.**
+
+Texto jornalístico...
+```
+
+## Enviar para a redação do portal
+
+Na Vercel do Radar, configure:
+
+```env
+PORTAL_DRAFT_ENDPOINT=https://seu-portal.com/api/radar/drafts
+PORTAL_DRAFT_TOKEN=troque-este-token-do-portal
+```
+
+Quando o usuário clicar em **Enviar para o site como rascunho**, o Radar envia:
+
+```json
+{
+  "title": "Título da matéria",
+  "excerpt": "Linha de apoio",
+  "content": "Corpo da matéria",
+  "status": "draft",
+  "category": "Categoria",
+  "city": "Cidade",
+  "sourceUrl": "Link da fonte",
+  "origin": "radar-sc-o-catarina"
+}
+```
+
+O portal precisa ter uma rota recebendo `POST` em `/api/radar/drafts`.
+
+Resposta esperada do portal:
+
+```json
+{
+  "ok": true,
+  "id": "123",
+  "editUrl": "https://seu-portal.com/admin/noticias/123"
+}
+```
+
+Se o portal for WordPress, a rota pode ser substituída por um endpoint interno que chama a REST API do WordPress criando post com `status=draft`.
+
+Se o portal for Next/Supabase, a rota deve inserir na tabela de posts/notícias com status `draft` ou `rascunho`.
+
+Incluí um exemplo em:
+
+```txt
+docs/portal-next-api-example.ts
+```
+
+Ele não deve ser copiado cegamente. Ajuste a tabela `posts`, nomes de colunas e URL de edição conforme o portal real.
 
 ## Arquivos incluídos
 
@@ -107,6 +183,9 @@ app/api/auth/logout/route.ts
 app/draft/page.tsx
 components/CopyBlock.tsx
 components/ManualCollectButton.tsx
+components/SendDraftToPortalButton.tsx
+app/api/portal/send-draft/route.ts
+docs/portal-next-api-example.ts
 .env.sem-login.example
 .env.com-login.example
 ```
@@ -116,5 +195,5 @@ Não exige SQL novo no Supabase.
 Commit sugerido:
 
 ```txt
-Update v14.4 coleta pesada na redacao
+Update v14.6 padrao editorial e rascunho portal
 ```

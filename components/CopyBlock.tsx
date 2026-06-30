@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { SendDraftToPortalButton } from './SendDraftToPortalButton';
 
 type DraftContent = {
   siteTitle: string;
@@ -49,7 +50,7 @@ function downloadText(filename: string, text: string, type = 'text/plain;charset
 }
 
 function siteArticleText(draft: DraftContent) {
-  return `${draft.siteTitle}\n\n${draft.supportLine}\n\n${draft.body}`;
+  return `Categoria correta da notícia: ${draft.category ?? 'Radar Estadual'}\n\n# ${draft.siteTitle}\n\n**${draft.supportLine}**\n\n${draft.body}`;
 }
 
 function escapeHtml(value: string) {
@@ -74,6 +75,7 @@ function siteArticleHtml(draft: DraftContent) {
     .join('\n');
 
   return [
+    draft.category ? `<p><strong>Categoria:</strong> ${escapeHtml(draft.category)}</p>` : '',
     `<h1>${escapeHtml(draft.siteTitle)}</h1>`,
     `<p><strong>${escapeHtml(draft.supportLine)}</strong></p>`,
     paragraphs,
@@ -178,6 +180,14 @@ export function DraftCopyPanel({ draft }: { draft: DraftContent }) {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+            <SendDraftToPortalButton
+              title={draft.siteTitle}
+              supportLine={draft.supportLine}
+              content={draft.body}
+              category={draft.category}
+              city={draft.city}
+              sourceUrl={draft.sourceUrl}
+            />
             <CopyButton text={siteArticle} label="Copiar matéria site" />
             <DownloadButton filename={`${slug}.txt`} text={siteArticle} label="Baixar TXT" />
             <DownloadButton filename={`${slug}.html`} text={siteHtml} label="Baixar HTML" type="text/html;charset=utf-8" />

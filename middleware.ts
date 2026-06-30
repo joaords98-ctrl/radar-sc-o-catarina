@@ -36,8 +36,9 @@ function isProtectedEditorialPath(pathname: string) {
 
 function isProtectedEditorialApi(req: NextRequest) {
   return (
-    req.nextUrl.pathname === '/api/panel/collect-news' &&
-    req.nextUrl.searchParams.get('mode') === 'full'
+    (req.nextUrl.pathname === '/api/panel/collect-news' &&
+      req.nextUrl.searchParams.get('mode') === 'full') ||
+    req.nextUrl.pathname === '/api/portal/send-draft'
   );
 }
 
