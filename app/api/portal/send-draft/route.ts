@@ -64,15 +64,36 @@ export async function POST(req: NextRequest) {
       origin: 'radar-sc-o-catarina',
     };
 
-    const response = await fetch(endpoint, {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}`, 'X-Radar-Token': token } : {}),
+    };
+    const payloadText = JSON.stringify(payload);
+
+    let response = await fetch(endpoint, {
       method: 'POST',
       redirect: 'manual',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}`, 'X-Radar-Token': token } : {}),
-      },
-      body: JSON.stringify(payload),
+      headers,
+      body: payloadText,
     });
+
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) {
+        return NextResponse.json(
+          { ok: false, error: `Portal retornou redirect ${response.status}, mas não informou Location.` },
+          { status: response.status },
+        );
+      }
+
+      const redirectUrl = new URL(location, endpoint).toString();
+      response = await fetch(redirectUrl, {
+        method: 'POST',
+        redirect: 'manual',
+        headers,
+        body: payloadText,
+      });
+    }
 
     const text = await response.text();
     let data: Record<string, unknown> = {};
@@ -94,6 +115,7 @@ export async function POST(req: NextRequest) {
         tokenConfigured: Boolean(token),
         tokenLength: token.length,
         portalStatus: response.status,
+        redirectLocation: response.headers.get('location'),
       });
       const friendlyError = response.status === 401
         ? 'Não autorizado. Confira se PORTAL_DRAFT_TOKEN no Radar é igual ao RADAR_DRAFT_TOKEN/PORTAL_DRAFT_TOKEN no portal.'
