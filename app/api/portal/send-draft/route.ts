@@ -117,8 +117,11 @@ export async function POST(req: NextRequest) {
         portalStatus: response.status,
         redirectLocation: response.headers.get('location'),
       });
-      const friendlyError = response.status === 401
+      const invalidSupabaseKey = /invalid api key/i.test(`${portalMessage} ${portalDetail}`);
+      const friendlyError = response.status === 401 && !invalidSupabaseKey
         ? 'Não autorizado. Confira se PORTAL_DRAFT_TOKEN no Radar é igual ao RADAR_DRAFT_TOKEN/PORTAL_DRAFT_TOKEN no portal.'
+        : invalidSupabaseKey
+          ? 'Supabase recusou a chave de API do portal. Confira SUPABASE_SERVICE_ROLE_KEY e VITE_SUPABASE_URL na Vercel do portal.'
         : [portalMessage || `Portal retornou status ${response.status}.`, portalDetail].filter(Boolean).join(' Detalhe: ');
       return NextResponse.json(
         { ok: false, error: [friendlyError, portalDetail ? `Detalhe: ${portalDetail}` : '', `Radar: ${radarDebug}`].filter(Boolean).join(' ') },
