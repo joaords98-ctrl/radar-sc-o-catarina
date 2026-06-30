@@ -208,3 +208,16 @@ Commit sugerido:
 ```txt
 Update v14.6 padrao editorial e rascunho portal
 ```
+
+## v14.17 — Filtro anti Google News genérico
+
+Esta correção impede que textos genéricos do Google News, como "Comprehensive up-to-date news coverage...", virem matéria ou rascunho.
+
+Mudanças:
+
+- A coleta ignora itens cujo título/descrição sejam texto institucional do Google News.
+- A coleta tenta salvar resumo apenas quando houver texto editorial útil.
+- O gerador não usa descrições genéricas como se fossem notícia.
+- Se não houver conteúdo real, o rascunho fica como pauta em apuração.
+
+Depois do deploy, rode uma coleta pesada nova. Pautas antigas já salvas com conteúdo fraco podem continuar aparecendo até serem descartadas/recoletadas.

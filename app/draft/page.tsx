@@ -17,6 +17,34 @@ function cleanText(value: string | null | undefined) {
     .trim();
 }
 
+
+function normalizeForChecks(value: string | null | undefined) {
+  return cleanText(value)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
+
+function isGoogleNewsPlaceholder(value: string | null | undefined) {
+  const text = normalizeForChecks(value);
+  if (!text) return false;
+  return /comprehensive up-to-date news coverage/.test(text)
+    || /aggregated from sources all over the world by google news/.test(text)
+    || /^google news$/.test(text)
+    || /^full coverage$/.test(text)
+    || /^cobertura completa$/.test(text)
+    || /view full coverage on google news/.test(text);
+}
+
+function isUsableEditorialText(value: string | null | undefined) {
+  const text = cleanText(value);
+  if (!text) return false;
+  if (/^https?:\/\//i.test(text)) return false;
+  if (isGoogleNewsPlaceholder(text)) return false;
+  if (text.length < 45) return false;
+  return true;
+}
+
 type SourceContext = {
   url: string;
   title: string;
@@ -63,6 +91,7 @@ function extractSourceContext(html: string, url: string): SourceContext {
   const paragraphs = paragraphMatches
     .map((match) => stripHtml(match[1]))
     .filter((text) => text.length >= 70)
+    .filter((text) => isUsableEditorialText(text))
     .filter((text) => !/cookies|newsletter|publicidade|assine|compartilhe|whatsapp|instagram|facebook|leia tamb[eé]m/i.test(text))
     .slice(0, 5);
 
@@ -165,6 +194,7 @@ function isWeakSummary(summary: string, title: string, source: string) {
 
   if (!cleanSummary) return true;
   if (/^https?:\/\//i.test(cleanSummary)) return true;
+  if (isGoogleNewsPlaceholder(cleanSummary)) return true;
   if (cleanSummary === cleanTitle) return true;
   if (cleanSummary.replace(cleanSource, '').trim() === cleanTitle) return true;
   if (cleanSummary.includes(cleanTitle) && cleanSummary.includes(cleanSource) && cleanSummary.length <= cleanTitle.length + cleanSource.length + 30) return true;
@@ -175,13 +205,18 @@ function sourceSummary(summary: string, sourceContext: SourceContext | null, tit
   const collectedSummary = cleanText(summary);
   if (collectedSummary && !isWeakSummary(collectedSummary, title, source)) return collectedSummary;
 
-  return cleanText(sourceContext?.description) || cleanText(sourceContext?.paragraphs?.[0]);
+  const description = cleanText(sourceContext?.description);
+  if (isUsableEditorialText(description) && !isWeakSummary(description, title, source)) return description;
+
+  const paragraph = (sourceContext?.paragraphs ?? []).find((text) => isUsableEditorialText(text));
+  return cleanText(paragraph);
 }
 
 function buildSupportLine(_item: NewsItem, title: string, summary: string, source: string, place: string, sourceContext: SourceContext | null) {
   const bestSummary = sourceSummary(summary, sourceContext, title, source);
   if (bestSummary) return truncate(bestSummary, 145);
-  return truncate(`Pauta em apuração sobre ${title} em ${place}.`, 145);
+  const safeTitle = isGoogleNewsPlaceholder(title) ? topicLabel(_item) : title;
+  return truncate(`Pauta em apuração sobre ${safeTitle} em ${place}.`, 145);
 }
 
 function buildSiteBody(item: NewsItem, title: string, summary: string, source: string, place: string, category: string, sourceContext: SourceContext | null) {
@@ -189,17 +224,21 @@ function buildSiteBody(item: NewsItem, title: string, summary: string, source: s
   const angle = cleanText(item.angle);
   const notes = cleanText(item.notes);
   const bestSummary = sourceSummary(summary, sourceContext, title, source);
-  const sourceParagraphs = (sourceContext?.paragraphs ?? []).filter((paragraph) => paragraph !== bestSummary).slice(0, 3);
+  const safeTitle = isGoogleNewsPlaceholder(title) ? `pauta de ${category} em ${place}` : title;
+  const sourceParagraphs = (sourceContext?.paragraphs ?? [])
+    .filter((paragraph) => paragraph !== bestSummary)
+    .filter((paragraph) => isUsableEditorialText(paragraph))
+    .slice(0, 3);
   const hasSensitiveTopic = isSensitiveCase(title, bestSummary, category);
 
   if (!bestSummary && !sourceParagraphs.length) {
     const angleBlock = angle ? `\n\n**Linha de apuração sugerida:** ${sentence(angle)}` : '';
-    return `**${place}** — A pauta **${title}** foi identificada pelo **Radar do O Catarina**, mas o sistema ainda não conseguiu puxar conteúdo suficiente da matéria original para transformar o caso em notícia pronta.\n\nA pauta está classificada como **${category}** e foi capturada em **${published}**.${angleBlock}\n\nAntes de publicar, a redação precisa confirmar **o fato principal**, **valores**, **datas**, **órgãos envolvidos**, **responsáveis citados**, **documentos oficiais** e **eventuais manifestações das partes**.\n\nPor enquanto, este rascunho deve ser tratado como **pauta em apuração**, não como matéria final.`;
+    return `**${place}** — A pauta **${safeTitle}** foi identificada pelo **Radar do O Catarina**, mas o sistema ainda não conseguiu puxar conteúdo suficiente da matéria original para transformar o caso em notícia pronta.\n\nA pauta está classificada como **${category}** e foi capturada em **${published}**.${angleBlock}\n\nAntes de publicar, a redação precisa confirmar **o fato principal**, **valores**, **datas**, **órgãos envolvidos**, **responsáveis citados**, **documentos oficiais** e **eventuais manifestações das partes**.\n\nPor enquanto, este rascunho deve ser tratado como **pauta em apuração**, não como matéria final.`;
   }
 
   const lead = bestSummary
     ? `**${place}** — ${sentence(bestSummary)} A informação foi localizada pelo **Radar do O Catarina** a partir de publicação de **${source}**.`
-    : `**${place}** — O **Radar do O Catarina** identificou uma pauta sobre **${title}** a partir de publicação de **${source}**. A informação ainda depende de complementação pela redação antes da publicação final.`;
+    : `**${place}** — O **Radar do O Catarina** identificou uma pauta sobre **${safeTitle}** a partir de publicação de **${source}**. A informação ainda depende de complementação pela redação antes da publicação final.`;
 
   const context = `A pauta foi classificada na categoria **${category}** e foi capturada em **${published}**.`;
   const sourceDetails = sourceParagraphs.length
@@ -243,7 +282,7 @@ function buildChecklist(item: NewsItem, source: string, place: string, category:
 
 function buildInstagramFromNews(item: NewsItem, title: string, summary: string, place: string, source: string, category: string, sourceContext: SourceContext | null) {
   const base = buildInstagramDraftForItem(item);
-  const hook = truncate(title, 120);
+  const hook = truncate(isGoogleNewsPlaceholder(title) ? `${category} em ${place}` : title, 120);
   const bestSummary = sourceSummary(summary, sourceContext, title, source);
   const detail = bestSummary
     ? truncate(bestSummary, 220)

@@ -122,6 +122,51 @@ function cleanHtml(value: string) {
     .trim();
 }
 
+
+function normalizeForChecks(value: string | null | undefined) {
+  return (value ?? '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
+
+function isGoogleNewsPlaceholder(value: string | null | undefined) {
+  const text = normalizeForChecks(value);
+  if (!text) return false;
+  return /comprehensive up-to-date news coverage/.test(text)
+    || /aggregated from sources all over the world by google news/.test(text)
+    || /^google news$/.test(text)
+    || /^full coverage$/.test(text)
+    || /^cobertura completa$/.test(text)
+    || /view full coverage on google news/.test(text);
+}
+
+function isUsableEditorialText(value: string | null | undefined) {
+  const text = (value ?? '').trim();
+  if (!text) return false;
+  if (/^https?:\/\//i.test(text)) return false;
+  if (isGoogleNewsPlaceholder(text)) return false;
+  if (text.replace(/\s+/g, ' ').trim().length < 45) return false;
+  return true;
+}
+
+
+function isUsableTitle(value: string | null | undefined) {
+  const text = (value ?? '').replace(/\s+/g, ' ').trim();
+  if (!text) return false;
+  if (/^https?:\/\//i.test(text)) return false;
+  if (isGoogleNewsPlaceholder(text)) return false;
+  if (text.length < 12) return false;
+  return true;
+}
+
 function extractMeta(html: string, patterns: RegExp[]) {
   for (const pattern of patterns) {
     const match = html.match(pattern);
@@ -134,6 +179,7 @@ function extractParagraphSummary(html: string) {
   const paragraphs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
     .map((match) => cleanHtml(match[1]))
     .filter((text) => text.length >= 90)
+    .filter((text) => isUsableEditorialText(text))
     .filter((text) => !/cookies|newsletter|publicidade|assine|compartilhe|whatsapp|instagram|facebook|leia tamb[eé]m/i.test(text));
   return paragraphs.slice(0, 2).join(' ');
 }
@@ -177,9 +223,10 @@ async function fetchArticleMetadata(url: string, timeoutMs: number) {
     ]);
     const paragraphSummary = extractParagraphSummary(html);
 
+    const summary = isUsableEditorialText(description) ? description : (isUsableEditorialText(paragraphSummary) ? paragraphSummary : null);
     return {
       finalUrl: response.url || url,
-      summary: description || paragraphSummary || null,
+      summary,
     };
   } catch {
     return null;
@@ -294,6 +341,11 @@ export async function collectNews(options: CollectOptions = {}) {
         }
 
         const { cleanTitle, sourceName } = splitGoogleNewsTitle(item.title);
+        if (!isUsableTitle(cleanTitle)) {
+          skipped += 1;
+          continue;
+        }
+
         const resolvedLink = await resolveArticleLink(item.link, Math.min(2200, settings.feedTimeoutMs));
         const metadata = !isGoogleNewsUrl(resolvedLink) && Date.now() < deadlineAt - 4000
           ? await fetchArticleMetadata(resolvedLink, Math.min(2600, settings.feedTimeoutMs))
@@ -301,7 +353,7 @@ export async function collectNews(options: CollectOptions = {}) {
         const articleLink = metadata?.finalUrl ?? resolvedLink;
         const sourceDomain = sourceDomainFromUrl(articleLink);
         const initialSummary = item.contentSnippet ?? item.content ?? null;
-        const enrichedSummary = metadata?.summary ?? initialSummary;
+        const enrichedSummary = metadata?.summary ?? (isUsableEditorialText(initialSummary) ? initialSummary : null);
         const externalId = normalizeExternalId(articleLink || item.link);
         const scMatch = classifySantaCatarinaNews({
           title: cleanTitle,
