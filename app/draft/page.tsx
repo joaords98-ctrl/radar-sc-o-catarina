@@ -158,23 +158,44 @@ function isSensitiveCase(title: string, summary: string, topic: string) {
   return /escândalo|escandalo|denúncia|denuncia|acusação|acusacao|corrupção|corrupcao|fraude|investiga|operação|operacao|licitação|licitacao|improbidade|crime|prisão|prisao|suspeito/i.test(`${topic} ${title} ${summary}`);
 }
 
-function sourceSummary(summary: string, sourceContext: SourceContext | null) {
-  return cleanText(summary) || cleanText(sourceContext?.description) || cleanText(sourceContext?.paragraphs?.[0]);
+function isWeakSummary(summary: string, title: string, source: string) {
+  const cleanSummary = cleanText(summary).toLowerCase();
+  const cleanTitle = cleanText(title).toLowerCase();
+  const cleanSource = cleanText(source).toLowerCase();
+
+  if (!cleanSummary) return true;
+  if (/^https?:\/\//i.test(cleanSummary)) return true;
+  if (cleanSummary === cleanTitle) return true;
+  if (cleanSummary.replace(cleanSource, '').trim() === cleanTitle) return true;
+  if (cleanSummary.includes(cleanTitle) && cleanSummary.includes(cleanSource) && cleanSummary.length <= cleanTitle.length + cleanSource.length + 30) return true;
+  return false;
+}
+
+function sourceSummary(summary: string, sourceContext: SourceContext | null, title = '', source = '') {
+  const collectedSummary = cleanText(summary);
+  if (collectedSummary && !isWeakSummary(collectedSummary, title, source)) return collectedSummary;
+
+  return cleanText(sourceContext?.description) || cleanText(sourceContext?.paragraphs?.[0]);
 }
 
 function buildSupportLine(_item: NewsItem, title: string, summary: string, source: string, place: string, sourceContext: SourceContext | null) {
-  const bestSummary = sourceSummary(summary, sourceContext);
+  const bestSummary = sourceSummary(summary, sourceContext, title, source);
   if (bestSummary) return truncate(bestSummary, 145);
-  return truncate(`Caso em ${place} foi localizado pelo Radar a partir de publicação de ${source}.`, 145);
+  return truncate(`Pauta em apuração sobre ${title} em ${place}.`, 145);
 }
 
 function buildSiteBody(item: NewsItem, title: string, summary: string, source: string, place: string, category: string, sourceContext: SourceContext | null) {
   const published = item.published_at ? formatBrazilDateTimeWithZone(item.published_at) : 'data não informada';
   const angle = cleanText(item.angle);
   const notes = cleanText(item.notes);
-  const bestSummary = sourceSummary(summary, sourceContext);
+  const bestSummary = sourceSummary(summary, sourceContext, title, source);
   const sourceParagraphs = (sourceContext?.paragraphs ?? []).filter((paragraph) => paragraph !== bestSummary).slice(0, 3);
   const hasSensitiveTopic = isSensitiveCase(title, bestSummary, category);
+
+  if (!bestSummary && !sourceParagraphs.length) {
+    const angleBlock = angle ? `\n\n**Linha de apuração sugerida:** ${sentence(angle)}` : '';
+    return `**${place}** — A pauta **${title}** foi identificada pelo **Radar do O Catarina**, mas o sistema ainda não conseguiu puxar conteúdo suficiente da matéria original para transformar o caso em notícia pronta.\n\nA pauta está classificada como **${category}** e foi capturada em **${published}**.${angleBlock}\n\nAntes de publicar, a redação precisa confirmar **o fato principal**, **valores**, **datas**, **órgãos envolvidos**, **responsáveis citados**, **documentos oficiais** e **eventuais manifestações das partes**.\n\nPor enquanto, este rascunho deve ser tratado como **pauta em apuração**, não como matéria final.`;
+  }
 
   const lead = bestSummary
     ? `**${place}** — ${sentence(bestSummary)} A informação foi localizada pelo **Radar do O Catarina** a partir de publicação de **${source}**.`
@@ -197,7 +218,7 @@ function buildSiteBody(item: NewsItem, title: string, summary: string, source: s
 }
 
 function buildChecklist(item: NewsItem, source: string, place: string, category: string, title: string, summary: string, sourceContext: SourceContext | null) {
-  const hasSummary = Boolean(sourceSummary(summary, sourceContext));
+  const hasSummary = Boolean(sourceSummary(summary, sourceContext, title, source));
   const sensitive = isSensitiveCase(title, summary, category);
   return [
     `Categoria sugerida: ${category}`,
@@ -223,7 +244,7 @@ function buildChecklist(item: NewsItem, source: string, place: string, category:
 function buildInstagramFromNews(item: NewsItem, title: string, summary: string, place: string, source: string, category: string, sourceContext: SourceContext | null) {
   const base = buildInstagramDraftForItem(item);
   const hook = truncate(title, 120);
-  const bestSummary = sourceSummary(summary, sourceContext);
+  const bestSummary = sourceSummary(summary, sourceContext, title, source);
   const detail = bestSummary
     ? truncate(bestSummary, 220)
     : `A pauta foi localizada a partir de ${source} e precisa de checagem antes da publicação final.`;
@@ -240,8 +261,8 @@ function buildInstagramFromNews(item: NewsItem, title: string, summary: string, 
 async function buildDraft(item: NewsItem) {
   const title = cleanText(item.title) || 'Pauta sem título';
   const sourceContext = await fetchSourceContext(item.link);
-  const summary = sourceSummary(cleanText(item.summary), sourceContext);
   const source = sourceLabel(item);
+  const summary = sourceSummary(cleanText(item.summary), sourceContext, title, source);
   const place = placeLabel(item);
   const topic = topicLabel(item);
   const category = inferCategory(item, title, summary, topic);

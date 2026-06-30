@@ -1,4 +1,4 @@
-# Radar SC v14.6 — Radar híbrido
+# Radar SC v14.16 — Radar híbrido
 
 Esta entrega deixa o Radar em um modelo híbrido: a operação principal pode ficar aberta, mas a redação fica protegida por login.
 
@@ -120,6 +120,14 @@ Categoria correta da notícia: ...
 
 Texto jornalístico...
 ```
+
+## Conteúdo real da fonte
+
+A coleta agora tenta resolver links do Google News para encontrar o link original do portal e enriquecer o resumo salvo no Radar.
+
+No **Gerar base**, o Radar também tenta abrir a fonte e extrair descrição/parágrafos. Se não conseguir puxar conteúdo suficiente, o rascunho passa a ser marcado como **pauta em apuração**, em vez de parecer matéria final.
+
+Isso evita textos genéricos como se fossem notícia pronta quando só existe título + fonte + ângulo.
 
 ## Enviar para a redação do portal
 

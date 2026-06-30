@@ -22,7 +22,6 @@ const MODE_SETTINGS: Record<CollectMode, {
   deadlineMs: number;
   refreshRepercussion: boolean;
 }> = {
-  // Botão do painel: precisa terminar rápido para não travar a interface.
   quick: {
     queryLimit: 24,
     itemLimit: 6,
@@ -30,7 +29,6 @@ const MODE_SETTINGS: Record<CollectMode, {
     deadlineMs: 35_000,
     refreshRepercussion: false,
   },
-  // Cron diário: pode procurar um pouco mais, mas ainda respeita limite da Vercel Hobby.
   scheduled: {
     queryLimit: 70,
     itemLimit: 8,
@@ -38,7 +36,6 @@ const MODE_SETTINGS: Record<CollectMode, {
     deadlineMs: 52_000,
     refreshRepercussion: true,
   },
-  // Uso manual avançado, se chamado com ?mode=full.
   full: {
     queryLimit: 110,
     itemLimit: 10,
@@ -47,7 +44,6 @@ const MODE_SETTINGS: Record<CollectMode, {
     refreshRepercussion: true,
   },
 };
-
 
 const SCANDAL_QUERIES: RssQuery[] = [
   { id: 'auto-escandalos-1', label: 'Escândalos SC · denúncias e investigações', query: 'denúncia OR investigação OR irregularidade prefeitura Santa Catarina', topic: 'Escândalos/Denúncias', city: null, region: null, priority_weight: 120, enabled: true },
@@ -102,6 +98,128 @@ async function parseFeedWithTimeout(url: string, timeoutMs: number) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function isGoogleNewsUrl(url: string) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return host === 'news.google.com';
+  } catch {
+    return false;
+  }
+}
+
+function cleanHtml(value: string) {
+  return value
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractMeta(html: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return cleanHtml(match[1]);
+  }
+  return '';
+}
+
+function extractParagraphSummary(html: string) {
+  const paragraphs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
+    .map((match) => cleanHtml(match[1]))
+    .filter((text) => text.length >= 90)
+    .filter((text) => !/cookies|newsletter|publicidade|assine|compartilhe|whatsapp|instagram|facebook|leia tamb[eé]m/i.test(text));
+  return paragraphs.slice(0, 2).join(' ');
+}
+
+function firstExternalUrlFromHtml(html: string) {
+  const urls = Array.from(html.matchAll(/https?:\/\/[^"'<>\s)]+/gi))
+    .map((match) => match[0].replace(/\\u003d/g, '=').replace(/\\u0026/g, '&'))
+    .filter((url) => {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, '');
+        return host !== 'news.google.com' && host !== 'google.com' && !host.endsWith('.google.com') && !host.includes('gstatic') && !host.includes('googleusercontent');
+      } catch {
+        return false;
+      }
+    });
+  return urls[0] ?? null;
+}
+
+async function fetchArticleMetadata(url: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RadarSC/1.0; +https://ocatarina.com.br)',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+    });
+
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!response.ok || !contentType.includes('text/html')) return null;
+
+    const html = await response.text();
+    const description = extractMeta(html, [
+      /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+      /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+      /<meta[^>]+name=["']twitter:description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    ]);
+    const paragraphSummary = extractParagraphSummary(html);
+
+    return {
+      finalUrl: response.url || url,
+      summary: description || paragraphSummary || null,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function resolveArticleLink(link: string, timeoutMs: number) {
+  if (!isGoogleNewsUrl(link)) return link;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(link, {
+      redirect: 'manual',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RadarSC/1.0; +https://ocatarina.com.br)',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+    });
+
+    const location = response.headers.get('location');
+    if (location) {
+      const redirected = new URL(location, link).toString();
+      if (!isGoogleNewsUrl(redirected)) return redirected;
+    }
+
+    const html = await response.text().catch(() => '');
+    const externalUrl = firstExternalUrlFromHtml(html);
+    if (externalUrl) return externalUrl;
+  } catch {
+    return link;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  return link;
 }
 
 function isDeadlineReached(deadlineAt: number) {
@@ -175,12 +293,19 @@ export async function collectNews(options: CollectOptions = {}) {
           continue;
         }
 
-        const externalId = normalizeExternalId(item.link);
         const { cleanTitle, sourceName } = splitGoogleNewsTitle(item.title);
-        const sourceDomain = sourceDomainFromUrl(item.link);
+        const resolvedLink = await resolveArticleLink(item.link, Math.min(2200, settings.feedTimeoutMs));
+        const metadata = !isGoogleNewsUrl(resolvedLink) && Date.now() < deadlineAt - 4000
+          ? await fetchArticleMetadata(resolvedLink, Math.min(2600, settings.feedTimeoutMs))
+          : null;
+        const articleLink = metadata?.finalUrl ?? resolvedLink;
+        const sourceDomain = sourceDomainFromUrl(articleLink);
+        const initialSummary = item.contentSnippet ?? item.content ?? null;
+        const enrichedSummary = metadata?.summary ?? initialSummary;
+        const externalId = normalizeExternalId(articleLink || item.link);
         const scMatch = classifySantaCatarinaNews({
           title: cleanTitle,
-          summary: item.contentSnippet ?? item.content ?? null,
+          summary: enrichedSummary,
           sourceName: sourceName ?? item.creator ?? feed.title ?? 'Google News',
           sourceDomain,
           queryCity: query.city,
@@ -199,7 +324,7 @@ export async function collectNews(options: CollectOptions = {}) {
         const detectedRegion = scMatch.region ?? query.region ?? null;
         const score = scoreNews({
           title: cleanTitle,
-          summary: item.contentSnippet,
+          summary: enrichedSummary ?? undefined,
           queryWeight: query.priority_weight,
           publishedAt,
         });
@@ -214,13 +339,13 @@ export async function collectNews(options: CollectOptions = {}) {
           {
             external_id: externalId,
             title: cleanTitle,
-            link: item.link,
+            link: articleLink,
             source_name: sourceName ?? item.creator ?? feed.title ?? 'Google News',
-            source_url: feed.link ?? null,
+            source_url: item.link,
             source_domain: sourceDomain,
             story_key: storyKey,
             published_at: new Date(publishedAt).toISOString(),
-            summary: item.contentSnippet ?? item.content ?? null,
+            summary: enrichedSummary,
             query_label: query.label,
             topic: query.topic,
             city: detectedCity,
