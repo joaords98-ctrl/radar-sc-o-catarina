@@ -44,9 +44,10 @@ export async function POST(req: NextRequest) {
 
     const response = await fetch(endpoint, {
       method: 'POST',
+      redirect: 'manual',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(token ? { Authorization: `Bearer ${token}`, 'X-Radar-Token': token } : {}),
       },
       body: JSON.stringify(payload),
     });
@@ -61,11 +62,22 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const portalMessage = String(data.error ?? data.message ?? '');
+      const portalDetail = typeof data.detail === 'string'
+        ? data.detail
+        : data.detail
+          ? JSON.stringify(data.detail)
+          : '';
+      const radarDebug = JSON.stringify({
+        endpoint,
+        tokenConfigured: Boolean(token),
+        tokenLength: token.length,
+        portalStatus: response.status,
+      });
       const friendlyError = response.status === 401
         ? 'Não autorizado. Confira se PORTAL_DRAFT_TOKEN no Radar é igual ao RADAR_DRAFT_TOKEN/PORTAL_DRAFT_TOKEN no portal.'
-        : portalMessage || `Portal retornou status ${response.status}.`;
+        : [portalMessage || `Portal retornou status ${response.status}.`, portalDetail].filter(Boolean).join(' Detalhe: ');
       return NextResponse.json(
-        { ok: false, error: friendlyError },
+        { ok: false, error: [friendlyError, portalDetail ? `Detalhe: ${portalDetail}` : '', `Radar: ${radarDebug}`].filter(Boolean).join(' ') },
         { status: response.status },
       );
     }
