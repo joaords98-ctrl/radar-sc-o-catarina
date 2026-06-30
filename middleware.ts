@@ -34,11 +34,18 @@ function isProtectedEditorialPath(pathname: string) {
   );
 }
 
+function isProtectedEditorialApi(req: NextRequest) {
+  return (
+    req.nextUrl.pathname === '/api/panel/collect-news' &&
+    req.nextUrl.searchParams.get('mode') === 'full'
+  );
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (isPublicPath(pathname)) return NextResponse.next();
 
-  const shouldProtect = isLoginRequired() || (isEditorialLoginRequired() && isProtectedEditorialPath(pathname));
+  const shouldProtect = isLoginRequired() || (isEditorialLoginRequired() && (isProtectedEditorialPath(pathname) || isProtectedEditorialApi(req)));
   if (!shouldProtect) return NextResponse.next();
 
   const token = expectedToken();

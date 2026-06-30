@@ -1,4 +1,4 @@
-# Radar SC v14.2 — Radar híbrido
+# Radar SC v14.4 — Radar híbrido
 
 Esta entrega deixa o Radar em um modelo híbrido: a operação principal pode ficar aberta, mas a redação fica protegida por login.
 
@@ -32,6 +32,25 @@ Ficam com login:
 - `/draft`;
 - botão **Gerar base**;
 - exportação da matéria pronta para o site.
+- **Coleta pesada**.
+
+## Coleta rápida e coleta pesada
+
+A coleta rápida continua disponível no painel aberto.
+
+A coleta pesada fica somente na tela:
+
+```txt
+/redacao
+```
+
+A API também fica protegida:
+
+```txt
+/api/panel/collect-news?mode=full
+```
+
+Ou seja: mesmo que alguém tente chamar a rota manualmente, a coleta pesada exige login.
 
 ## 2. Versão completa com login
 
@@ -87,6 +106,7 @@ app/api/auth/login/route.ts
 app/api/auth/logout/route.ts
 app/draft/page.tsx
 components/CopyBlock.tsx
+components/ManualCollectButton.tsx
 .env.sem-login.example
 .env.com-login.example
 ```
@@ -96,5 +116,5 @@ Não exige SQL novo no Supabase.
 Commit sugerido:
 
 ```txt
-Update v14.2 radar hibrido redacao com login
+Update v14.4 coleta pesada na redacao
 ```

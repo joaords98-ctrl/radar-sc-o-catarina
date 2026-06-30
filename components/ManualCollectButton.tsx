@@ -17,12 +17,17 @@ type CollectResponse = {
   stoppedByDeadline?: boolean;
 };
 
+type Props = {
+  variant?: Variant;
+  showHeavy?: boolean;
+};
+
 const MODE_LABEL: Record<CollectMode, string> = {
   quick: 'rápida',
   full: 'pesada',
 };
 
-export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant }) {
+export function ManualCollectButton({ variant = 'inline', showHeavy = false }: Props) {
   const [loadingMode, setLoadingMode] = useState<CollectMode | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +55,11 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
         data = { error: text || 'Resposta inválida do servidor.' };
       }
 
+      if (res.status === 401) {
+        window.location.href = `/login?next=${encodeURIComponent('/redacao')}`;
+        return;
+      }
+
       if (!res.ok || !data.ok) {
         throw new Error(data.error || `Falha ao coletar notícias. Status ${res.status}.`);
       }
@@ -74,8 +84,9 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
     }
   }
 
+  const disabled = loadingMode !== null;
+
   if (variant === 'header') {
-    const disabled = loadingMode !== null;
     return (
       <div className="relative">
         <div className="flex items-center gap-2">
@@ -88,15 +99,17 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
           >
             {loadingMode === 'quick' ? 'Coletando...' : 'Atualizar'}
           </button>
-          <button
-            type="button"
-            onClick={() => runCollect('full')}
-            disabled={disabled}
-            className="whitespace-nowrap rounded-full bg-zinc-900 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
-            title="Coleta pesada: busca mais fontes. Pode levar mais tempo."
-          >
-            {loadingMode === 'full' ? 'Pesada...' : 'Pesada'}
-          </button>
+          {showHeavy ? (
+            <button
+              type="button"
+              onClick={() => runCollect('full')}
+              disabled={disabled}
+              className="whitespace-nowrap rounded-full bg-zinc-900 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
+              title="Coleta pesada: busca mais fontes. Pode levar mais tempo."
+            >
+              {loadingMode === 'full' ? 'Pesada...' : 'Pesada'}
+            </button>
+          ) : null}
         </div>
         {message ? (
           <div className="fixed left-4 right-4 top-[86px] z-50 rounded-xl border border-emerald-200 bg-white p-3 text-xs font-semibold text-emerald-800 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-96">
@@ -112,8 +125,6 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
     );
   }
 
-  const disabled = loadingMode !== null;
-
   return (
     <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -125,17 +136,19 @@ export function ManualCollectButton({ variant = 'inline' }: { variant?: Variant 
         >
           {loadingMode === 'quick' ? 'Coletando...' : 'Coleta rápida'}
         </button>
-        <button
-          type="button"
-          onClick={() => runCollect('full')}
-          disabled={disabled}
-          className="w-full rounded-xl bg-zinc-900 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-        >
-          {loadingMode === 'full' ? 'Coletando pesado...' : 'Coleta pesada'}
-        </button>
+        {showHeavy ? (
+          <button
+            type="button"
+            onClick={() => runCollect('full')}
+            disabled={disabled}
+            className="w-full rounded-xl bg-zinc-900 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {loadingMode === 'full' ? 'Coletando pesado...' : 'Coleta pesada'}
+          </button>
+        ) : null}
       </div>
       <p className="text-left text-[11px] font-semibold text-zinc-500 sm:max-w-md sm:text-right">
-        Rápida: uso normal. Pesada: busca mais fontes e pode voltar parcial para evitar timeout.
+        Rápida: uso normal. Pesada: área de redação com login.
       </p>
       {message ? <p className="text-left text-xs font-semibold text-emerald-700 sm:max-w-md sm:text-right">{message}</p> : null}
       {error ? <p className="text-left text-xs font-semibold text-red-700 sm:max-w-md sm:text-right">{error}</p> : null}
