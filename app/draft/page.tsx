@@ -3,6 +3,8 @@ import type { NewsItem } from '@/lib/types';
 import { DraftCopyPanel } from '@/components/CopyBlock';
 import { buildInstagramDraftForItem } from '@/lib/instagram';
 import { formatBrazilDateTimeWithZone } from '@/lib/date';
+import { readArticle } from '@/lib/articleReader';
+import { writeDraftWithAI } from '@/lib/aiWriter';
 
 export const dynamic = 'force-dynamic';
 
@@ -307,18 +309,46 @@ async function buildDraft(item: NewsItem) {
   const category = inferCategory(item, title, summary, topic);
   const siteTitle = truncate(title, 105);
   const supportLine = buildSupportLine(item, title, summary, source, place, sourceContext);
-  const body = buildSiteBody(item, title, summary, source, place, category, sourceContext);
   const checklist = buildChecklist(item, source, place, category, title, summary, sourceContext);
   const instagramDraft = buildInstagramFromNews(item, title, summary, place, source, category, sourceContext);
 
+  // 1) Tenta redigir um rascunho original via IA a partir dos fatos apurados.
+  const facts = await readArticle(item.link);
+  const aiDraft = await writeDraftWithAI({
+    pautaTitle: title,
+    category,
+    place,
+    sourceName: source,
+    sourceUrl: facts.finalUrl || item.link,
+    angle: cleanText(item.angle) || null,
+    facts,
+    sensitive: isSensitiveCase(title, summary, category),
+  });
+
+  // 2) Se a IA escreveu, usa o texto dela; senão mantém o comportamento atual.
+  let finalTitle = siteTitle;
+  let finalSupport = supportLine;
+  let body: string;
+
+  if (aiDraft) {
+    finalTitle = truncate(aiDraft.title || title, 105);
+    finalSupport = aiDraft.supportLine ? truncate(aiDraft.supportLine, 145) : supportLine;
+    const notesBlock = aiDraft.reviewerNotes.length
+      ? `\n\n---\n**Checagem antes de publicar (rascunho gerado por IA — revisar):**\n${aiDraft.reviewerNotes.map((n) => `- ${n}`).join('\n')}`
+      : '\n\n---\n**Rascunho gerado por IA. Revisar fatos, nomes e números na fonte original antes de publicar.**';
+    body = `${aiDraft.body}${notesBlock}\n\nFonte de apuração: ${facts.finalUrl || item.link}`;
+  } else {
+    body = buildSiteBody(item, title, summary, source, place, category, sourceContext);
+  }
+
   return {
-    siteTitle,
-    supportLine,
+    siteTitle: finalTitle,
+    supportLine: finalSupport,
     body,
     checklist,
     instagram: instagramDraft.caption,
     video: instagramDraft.reels,
-    sourceUrl: item.link,
+    sourceUrl: facts.finalUrl || item.link,
     category,
     city: place,
   };
