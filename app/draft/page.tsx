@@ -4,7 +4,7 @@ import { DraftCopyPanel } from '@/components/CopyBlock';
 import { buildInstagramDraftForItem } from '@/lib/instagram';
 import { formatBrazilDateTimeWithZone } from '@/lib/date';
 import { readArticle } from '@/lib/articleReader';
-import { writeDraftWithAI, lastFailureReason } from '@/lib/aiWriter';
+import { writeDraftWithAI } from '@/lib/aiWriter';
 
 export const dynamic = 'force-dynamic';
 
@@ -339,8 +339,6 @@ async function buildDraft(item: NewsItem) {
     body = `${aiDraft.body}${notesBlock}\n\nFonte de apuração: ${facts.finalUrl || item.link}`;
   } else {
     body = buildSiteBody(item, title, summary, source, place, category, sourceContext);
-    // DIAGNÓSTICO temporário: mostra na tela por que a IA não redigiu.
-    body = `${body}\n\n---\n[diagnóstico IA] motivo: ${lastFailureReason || 'desconhecido'}`;
   }
 
   return {

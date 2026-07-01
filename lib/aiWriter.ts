@@ -44,7 +44,7 @@ function buildSystemInstruction(sensitive: boolean) {
       : '- Confirme dados básicos (local, data, órgão) com naturalidade no texto.',
     'Responda SOMENTE com JSON válido, sem markdown e sem cercas de código, no formato:',
     '{"title": string, "supportLine": string, "body": string, "reviewerNotes": string[]}',
-    'body usa parágrafos separados por \\n\\n. reviewerNotes lista o que a redação precisa confirmar antes de publicar.',
+    'body usa parágrafos separados por \\n\\n. Máximo de 5 parágrafos, texto enxuto e objetivo (evite encher linguiça). reviewerNotes lista o que a redação precisa confirmar antes de publicar.',
   ].join('\n');
 }
 
@@ -67,20 +67,53 @@ function buildUserPrompt(input: WriteInput) {
 
 function safeJsonParse(text: string): Partial<AiDraft> | null {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+  // 1) Tentativa direta.
   try {
     return JSON.parse(cleaned);
   } catch {
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start >= 0 && end > start) {
-      try {
-        return JSON.parse(cleaned.slice(start, end + 1));
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    /* segue */
   }
+
+  // 2) Recorta do primeiro { ao último } e tenta de novo.
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      /* segue para recuperação de JSON cortado */
+    }
+  }
+
+  // 3) JSON cortado (resposta truncada): extrai os campos por regex mesmo sem fechar.
+  const grab = (key: string): string | null => {
+    // captura "key": "....." lidando com aspas escapadas
+    const m = cleaned.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)`, 'i'));
+    if (!m) return null;
+    try {
+      return JSON.parse(`"${m[1]}"`); // desescapa \n, \" etc.
+    } catch {
+      return m[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+    }
+  };
+
+  const title = grab('title');
+  const body = grab('body');
+  if (title && body) {
+    const notesMatch = cleaned.match(/"reviewerNotes"\s*:\s*\[([^\]]*)/i);
+    const reviewerNotes = notesMatch
+      ? Array.from(notesMatch[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)).map((n) => n[1])
+      : [];
+    return {
+      title,
+      supportLine: grab('supportLine') ?? '',
+      body,
+      reviewerNotes,
+    };
+  }
+
+  return null;
 }
 
 export let lastFailureReason = '';
@@ -120,7 +153,7 @@ async function writeDraftWithAIInner(input: WriteInput): Promise<AiDraft | strin
         contents: [{ role: 'user', parts: [{ text: buildUserPrompt(input) }] }],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 1500,
+          maxOutputTokens: 4096,
           responseMimeType: 'application/json',
         },
       }),
