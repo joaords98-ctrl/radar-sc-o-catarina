@@ -125,11 +125,57 @@ async function decodeViaBatchExecute(articleId: string, timeoutMs: number): Prom
       clearTimeout(timeout);
     }
 
-    // 3) A resposta traz a URL real dentro de um JSON aninhado; extraímos a primeira URL http externa.
-    const urlMatch = json.match(/"(https?:\/\/(?!news\.google)[^"\\]+)"/);
-    if (urlMatch?.[1]) return urlMatch[1];
+    // 3) A resposta do batchexecute vem com prefixo )]}' e JSON aninhado com
+    //    escapes duplos. Tentamos primeiro o parse estruturado; se falhar,
+    //    usamos regex sobre a versão desescapada.
+    return extractUrlFromBatchResponse(json);
   } catch {
     /* cai nos fallbacks */
+  }
+  return null;
+}
+
+/** Extrai a URL real do portal de dentro da resposta do batchexecute. */
+function extractUrlFromBatchResponse(raw: string): string | null {
+  // Remove o prefixo anti-JSON-hijacking )]}'
+  const cleaned = raw.replace(/^\)\]\}'/, '').trim();
+
+  // Tentativa 1: parse estruturado. O formato é linhas de arrays; procuramos
+  // o bloco "garturlres" que contém a URL.
+  try {
+    const outer = JSON.parse(cleaned);
+    if (Array.isArray(outer)) {
+      for (const row of outer) {
+        // row[2] costuma ser uma string JSON com o resultado.
+        const inner = Array.isArray(row) ? row[2] : null;
+        if (typeof inner === 'string' && inner.includes('http')) {
+          const parsedInner = JSON.parse(inner);
+          const found = deepFindUrl(parsedInner);
+          if (found) return found;
+        }
+      }
+    }
+  } catch {
+    /* tenta regex abaixo */
+  }
+
+  // Tentativa 2: desescapar e pegar a primeira URL externa por regex.
+  const unescaped = cleaned.replace(/\\\//g, '/').replace(/\\u003d/g, '=').replace(/\\u0026/g, '&');
+  const m = unescaped.match(/https?:\/\/(?!news\.google\.com|www\.google\.com)[^"\\,\s]+/);
+  return m?.[0] ?? null;
+}
+
+/** Procura recursivamente a primeira string que seja uma URL externa. */
+function deepFindUrl(value: unknown): string | null {
+  if (typeof value === 'string') {
+    if (/^https?:\/\//.test(value) && !/google\.com/.test(value)) return value;
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (const v of value) {
+      const found = deepFindUrl(v);
+      if (found) return found;
+    }
   }
   return null;
 }
