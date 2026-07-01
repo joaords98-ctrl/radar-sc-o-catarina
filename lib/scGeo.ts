@@ -550,7 +550,13 @@ function normalize(input: string) {
 
 function containsPhrase(text: string, phrase: string) {
   const normalizedPhrase = normalize(phrase);
-  return text.includes(normalizedPhrase);
+  if (!normalizedPhrase) return false;
+  // Fronteira de palavra: evita casar "Penha" dentro de outra palavra ou
+  // "Rio do Sul" no meio de outra composição. Exige que a frase apareça
+  // delimitada por início/fim ou por caractere não alfanumérico.
+  const escaped = normalizedPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const boundary = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`);
+  return boundary.test(text);
 }
 
 function detectCity(rawText: string) {

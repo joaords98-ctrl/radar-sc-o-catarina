@@ -171,16 +171,16 @@ const categories = [
 function inferCategory(item: NewsItem, title: string, summary: string, topic: string) {
   const haystack = `${title} ${summary} ${topic} ${item.query_label ?? ''} ${item.angle ?? ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-  if (/escandalo|denuncia|fraude|corrupcao|superfaturamento|improbidade|rachadinha|nepotismo|contrato suspeito/.test(haystack)) return 'Escândalos/Denúncias';
-  if (/policia|prisao|preso|homicidio|assalto|roubo|furto|trafico|arma|operacao policial|delegacia|pm|pcsc/.test(haystack)) return 'Segurança Pública';
-  if (/justica|tjsc|mpsc|ministerio publico|processo|condenacao|liminar|decisao judicial|acao civil/.test(haystack)) return 'Justiça';
-  if (/prefeitura|camara|vereador|prefeito|governo|secretaria|servidor|licitacao|contrato publico|tce/.test(haystack)) return 'Gestão Pública';
-  if (/deputado|senador|governador|eleicao|partido|politica|assembleia legislativa|alesc/.test(haystack)) return 'Política';
-  if (/rodovia|br-|sc-|prf|transito|acidente|colisao|atropelamento|bloqueio|fila|interdicao/.test(haystack)) return 'Trânsito/Rodovias';
-  if (/animal|cao|gato|maus-tratos|maus tratos|resgate animal|causa animal/.test(haystack)) return 'Causa Animal';
-  if (/crianca|adolescente|menor|escola|creche|conselho tutelar|infancia/.test(haystack)) return 'Infância e Adolescência';
-  if (/assistencia social|morador de rua|vulnerabilidade|abrigo|cras|beneficio social/.test(haystack)) return 'Assistência Social';
-  if (/economia|empresa|emprego|industria|comercio|preco|investimento|mercado|turismo/.test(haystack)) return 'Economia';
+  if (/\b(escandalo|denuncia|fraude|corrupcao|superfaturamento|improbidade|rachadinha|nepotismo)\b|contrato suspeito/.test(haystack)) return 'Escândalos/Denúncias';
+  if (/\b(policia|prisao|preso|homicidio|assalto|roubo|furto|trafico|arma|delegacia|pm|pcsc|gaeco|faccao|apreensao|mandado)\b|operacao policial|crime organizado/.test(haystack)) return 'Segurança Pública';
+  if (/\b(justica|tjsc|mpsc|processo|condenacao|liminar)\b|ministerio publico|decisao judicial|acao civil/.test(haystack)) return 'Justiça';
+  if (/\b(prefeitura|camara|vereador|prefeito|governo|secretaria|servidor|licitacao|tce)\b|contrato publico/.test(haystack)) return 'Gestão Pública';
+  if (/\b(deputado|senador|governador|eleicao|partido|politica|alesc)\b|assembleia legislativa/.test(haystack)) return 'Política';
+  if (/\b(rodovia|prf|transito|acidente|colisao|atropelamento|bloqueio|fila|interdicao)\b|br-|sc-/.test(haystack)) return 'Trânsito/Rodovias';
+  if (/\b(animal|animais|cao|caes|gato|gatos)\b|maus-tratos|maus tratos|resgate animal|causa animal/.test(haystack)) return 'Causa Animal';
+  if (/\b(crianca|adolescente|menor|escola|creche|infancia)\b|conselho tutelar/.test(haystack)) return 'Infância e Adolescência';
+  if (/\b(abrigo|cras)\b|assistencia social|morador de rua|vulnerabilidade|beneficio social/.test(haystack)) return 'Assistência Social';
+  if (/\b(economia|empresa|emprego|industria|comercio|preco|investimento|mercado|turismo)\b/.test(haystack)) return 'Economia';
   if (categories.includes(topic as typeof categories[number])) return topic;
   return 'Radar Estadual';
 }
