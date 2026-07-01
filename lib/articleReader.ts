@@ -154,6 +154,12 @@ export async function readArticle(link: string, timeoutMs = 7000): Promise<Artic
 
   const rawForAI = [title, description, ...paragraphs].filter(Boolean).join('\n').slice(0, 6000);
 
+  console.log(
+    `[redacao-ia] leitura da fonte: finalUrl=${finalUrl} | fetched=${Boolean(
+      title || description || paragraphs.length,
+    )} | titulo=${title ? 'sim' : 'nao'} | paragrafos=${paragraphs.length} | tamanho=${rawForAI.length}`,
+  );
+
   return {
     finalUrl,
     fetched: Boolean(title || description || paragraphs.length),
