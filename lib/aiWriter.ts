@@ -83,26 +83,29 @@ function safeJsonParse(text: string): Partial<AiDraft> | null {
   }
 }
 
-export async function writeDraftWithAI(input: WriteInput): Promise<AiDraft | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    log('PULOU: GEMINI_API_KEY não encontrada no ambiente.');
-    return null;
-  }
-  log(`chave detectada (começa com "${apiKey.slice(0, 6)}...", tamanho ${apiKey.length}).`);
+export let lastFailureReason = '';
 
-  if (!input.facts.fetched) {
-    log(`PULOU: não conseguiu LER a fonte. URL final: ${input.facts.finalUrl}`);
+export async function writeDraftWithAI(input: WriteInput): Promise<AiDraft | null> {
+  const result = await writeDraftWithAIInner(input);
+  if (typeof result === 'string') {
+    lastFailureReason = result;
+    log(`RESULTADO: ${result}`);
     return null;
   }
-  if (input.facts.rawForAI.length < 120) {
-    log(`PULOU: fonte lida mas texto curto demais (${input.facts.rawForAI.length} caracteres). URL: ${input.facts.finalUrl}`);
-    return null;
-  }
+  lastFailureReason = '';
+  return result;
+}
+
+async function writeDraftWithAIInner(input: WriteInput): Promise<AiDraft | string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return 'sem GEMINI_API_KEY no ambiente';
+  if (!input.facts.fetched) return `nao leu a fonte (url: ${input.facts.finalUrl})`;
+  if (input.facts.rawForAI.length < 120)
+    return `fonte lida mas texto curto (${input.facts.rawForAI.length} chars)`;
 
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  log(`chamando Gemini (modelo ${model}) com ${input.facts.rawForAI.length} caracteres de apuração...`);
+  log(`chamando Gemini (${model}) com ${input.facts.rawForAI.length} chars...`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -125,26 +128,21 @@ export async function writeDraftWithAI(input: WriteInput): Promise<AiDraft | nul
 
     if (!response.ok) {
       const errBody = await response.text().catch(() => '');
-      log(`PULOU: Gemini respondeu HTTP ${response.status}. Detalhe: ${errBody.slice(0, 300)}`);
-      return null;
+      return `Gemini HTTP ${response.status}: ${errBody.slice(0, 200)}`;
     }
 
     const data = await response.json();
+    const finishReason = data?.candidates?.[0]?.finishReason ?? '';
     const text: string =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: { text?: string }) => p?.text ?? '')
         .join('\n') ?? '';
 
-    if (!text) {
-      log(`PULOU: Gemini respondeu OK mas sem texto. Resposta: ${JSON.stringify(data).slice(0, 300)}`);
-      return null;
-    }
+    if (!text) return `Gemini sem texto (finishReason: ${finishReason || 'desconhecido'})`;
 
     const parsed = safeJsonParse(text);
-    if (!parsed?.title || !parsed?.body) {
-      log(`PULOU: resposta do Gemini não veio no formato esperado. Texto: ${text.slice(0, 300)}`);
-      return null;
-    }
+    if (!parsed?.title || !parsed?.body)
+      return `resposta fora do formato esperado: ${text.slice(0, 200)}`;
 
     log('SUCESSO: rascunho redigido pela IA.');
     return {
@@ -158,8 +156,7 @@ export async function writeDraftWithAI(input: WriteInput): Promise<AiDraft | nul
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    log(`PULOU: erro de rede/timeout ao chamar Gemini: ${msg}`);
-    return null;
+    return `erro de rede/timeout: ${msg}`;
   } finally {
     clearTimeout(timeout);
   }
